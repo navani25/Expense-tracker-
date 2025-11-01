@@ -319,8 +319,8 @@ const App: React.FC = () => {
       case Page.CREATE_ACCOUNT: return <CreateAccount onSignup={handleLogin} setActivePage={setActivePage} />;
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
       case Page.PROFILE_SETTINGS: return <ProfileSettings setActivePage={setActivePage} currentName={userName} currentEmail={userEmail} onSave={handleSaveProfile} />;
-      case Page.EXPENSE_CATEGORIES: return <ExpenseCategories setActivePage={setActivePage} categories={categories.map(c => c.name)} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />;
-      case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories.map(c => c.name)} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteIncomeCategory} />;
+      case Page.EXPENSE_CATEGORIES: return <ExpenseCategories setActivePage={setActivePage} categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />;
+      case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteCategory} />;
       // case Page.TRANSFER_CATEGORIES: return <TransferCategories setActivePage={setActivePage} categories={transferCategories.map(c => c.name)} onAddCategory={handleAddTransferCategory} />; // Removed
       case Page.CURRENCY_SETTINGS: return <CurrencySettings setActivePage={setActivePage} selectedCurrency={currency} setSelectedCurrency={setCurrency} />;
       case Page.LANGUAGE_SETTINGS: return <LanguageSettings setActivePage={setActivePage} />;

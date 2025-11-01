@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import { Page } from '../types';
 import Header from './common/Header';
 import BackButton from './common/BackButton';
+import { Category } from '../types';
 
 interface ExpenseCategoriesProps {
   setActivePage: (page: Page) => void;
-  categories: string[];
+  categories: Category[];
   onAddCategory: (newCategory: string) => void;
   onDeleteCategory: (category: string) => void;
 }
-
 const AddCategoryModal: React.FC<{
   onClose: () => void;
   onSave: (name: string) => void;
@@ -54,13 +54,15 @@ const AddCategoryModal: React.FC<{
 };
 
 
-const CategoryItem: React.FC<{ label: string; onDelete: () => void }> = ({ label, onDelete }) => (
+const CategoryItem: React.FC<{ category: Category; onDelete: () => void }> = ({ category, onDelete }) => (
   <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-    <span className="font-medium text-gray-800 dark:text-gray-200">{label}</span>
+    <div className="flex items-center space-x-3">
+      <span className="text-2xl">{category.icon || '🏷️'}</span>
+      <span className="font-medium text-gray-800 dark:text-gray-200">{category.name}</span>
+    </div>
     <button onClick={onDelete} className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium">Delete</button>
   </div>
 );
-
 const EmptyState: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
     <div className="text-center p-8 my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm animate-fade-in-up">
         <div className="w-20 h-20 mx-auto bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center mb-5">
@@ -107,8 +109,8 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ setActivePage, ca
           <>
             <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm mb-4">
               {categories.map(category => (
-                <CategoryItem key={category} label={category} onDelete={() => handleDelete(category)} />
-              ))}
+            <CategoryItem key={category.name} category={category} onDelete={() => handleDelete(category.name)} />
+          ))}
             </div>
             <button 
               onClick={() => setShowAddModal(true)}
