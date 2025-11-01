@@ -222,8 +222,16 @@ const App: React.FC = () => {
               type = 'transfer';
           } else if ('source' in item) {
               type = 'income';
-          } else {
+          } else if ('vendor' in item) {
               type = 'expense';
+          } else {
+              // Fallback logic based on item.transactionType if available, or error
+              if(item.transactionType) {
+                type = item.transactionType;
+              } else {
+                console.error("Could not determine transaction type for item:", item);
+                return; // Skip saving this item
+              }
           }
 
           const transactionData = { ...item, transactionType: type, amount };
@@ -253,7 +261,7 @@ const App: React.FC = () => {
       await loadAllDataFromDB();
       setModalMode(null);
       setTransactionToEdit(null);
-  }, [userId, loadAllDataFromDB, currency]); // Removed `transactionType` as a dependency
+  }, [userId, loadAllDataFromDB, currency]);
 
   const handleAddCategory = async (newCategoryName: string) => { try { await api.addExpenseCategory(newCategoryName); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); } };
   const handleDeleteCategory = async (categoryToDelete: string) => {
@@ -299,13 +307,13 @@ const App: React.FC = () => {
     if (isLoading) { return <LoadingSpinner />; }
     const currentUserName = isUserSignedIn ? userName : "Welcome";
     switch (activePage) {
-      case Page.DASHBOARD: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      case Page.DASHBOARD: return <Dashboard openModal={(mode, type) => handleOpenModal(mode, type)} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
       case Page.HISTORY: return <History expenses={expenses} income={income} transfers={transfers} onEditTransaction={handleEditTransaction} onDeleteTransaction={handleDeleteTransaction} onAdd={(type) => handleOpenModal('manual', type)} setActivePage={setActivePage} currency={currency} />;
       case Page.REPORTS: return <Reports expenses={expenses} isDarkMode={isDarkMode} isBankConnected={isBankConnected} setActivePage={setActivePage} setIsBankConnected={setIsBankConnected} currency={currency} />;
       case Page.SETTINGS: return <Settings isUserSignedIn={isUserSignedIn} onLogout={handleLogout} setActivePage={setActivePage} setLoginProvider={setLoginProvider} userName={userName} userEmail={userEmail} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} profilePhoto={profilePhoto} onGoogleLogin={handleLogin} />;
       case Page.LOGIN: return <Login onLogin={handleLogin} provider={loginProvider} setActivePage={setActivePage} />;
       case Page.SIGNUP: return <Signup onSignup={() => handleLogin()} setActivePage={setActivePage} />;
-      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} transfers={transfers} />;
+      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} />;
        case Page.FORGOT_EMAIL: return <ForgotEmail setActivePage={setActivePage} />;
       case Page.CREATE_ACCOUNT: return <CreateAccount onSignup={handleLogin} setActivePage={setActivePage} />;
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
@@ -324,7 +332,7 @@ const App: React.FC = () => {
       case Page.LINK_ACCOUNT: return <LinkAccount setActivePage={setActivePage} bank={selectedBank} onConnect={() => {setIsBankConnected(true); setActivePage(Page.REPORTS);}} />;
       case Page.PROFILE_PHOTO: return <ProfilePhoto setActivePage={setActivePage} currentPhoto={profilePhoto} onPhotoChange={setProfilePhoto} userName={userName} />;
       case Page.DEMO_REPORT: return <DemoReport setActivePage={setActivePage} isDarkMode={isDarkMode} />;
-      default: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      default: return <Dashboard openModal={(mode, type) => handleOpenModal(mode, type)} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
     }
   };
 

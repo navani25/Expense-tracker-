@@ -69,14 +69,30 @@ app.put("/api/transaction/:id", (req, res) => {
         return res.status(400).json({ "error": "userId is required for update validation" });
     }
     const sql = `UPDATE transactions set 
+                    transactionType = COALESCE(?, transactionType),
                     amount = COALESCE(?, amount), 
                     category = COALESCE(?, category), 
                     date = COALESCE(?, date), 
                     notes = COALESCE(?, notes), 
-                    vendor = COALESCE(?, vendor) 
+                    vendor = COALESCE(?, vendor),
+                    source = COALESCE(?, source),
+                    fromAccount = COALESCE(?, fromAccount),
+                    toAccount = COALESCE(?, toAccount)
                  WHERE id = ? AND userId = ?`;
 
-    const params = [body.amount, body.category, body.date, body.notes, body.vendor, req.params.id, body.userId];
+    const params = [
+        body.transactionType,
+        body.amount, 
+        body.category, 
+        body.date, 
+        body.notes, 
+        body.vendor, 
+        body.source,
+        body.fromAccount,
+        body.toAccount,
+        req.params.id, 
+        body.userId
+    ];
     
     db.run(sql, params, function (err) {
         if (err) {
