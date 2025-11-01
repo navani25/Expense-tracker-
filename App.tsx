@@ -57,13 +57,11 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   
-  // --- FIX START: Combine modal state to prevent timing issues ---
   const [modalState, setModalState] = useState<{
     mode: 'manual' | 'voice' | 'receipt' | null;
     type: 'expense' | 'income';
   }>({ mode: null, type: 'expense' });
-  // --- FIX END ---
-
+  
   const [transactionToEdit, setTransactionToEdit] = useState<Expense | Income | Transfer | null>(null);
 
   const [isUserSignedIn, setIsUserSignedIn] = useState(false);
@@ -169,7 +167,6 @@ const App: React.FC = () => {
     setUserName(fullName);
   };
 
-  // --- FIX: Use the combined modal state for reliability ---
   const handleOpenModal = useCallback((mode: 'manual' | 'voice' | 'receipt', type: 'expense' | 'income' = 'expense') => {
     if(!isUserSignedIn){ setIsSignInPromptOpen(true); return; }
     setTransactionToEdit(null);
@@ -182,7 +179,6 @@ const App: React.FC = () => {
     setActivePage(Page.DASHBOARD);
   }, []);
   
-  // --- FIX: Use the combined modal state for reliability ---
   const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
     const type = 'source' in transaction ? 'income' : 'expense';
     setTransactionToEdit(transaction);
@@ -197,7 +193,7 @@ const App: React.FC = () => {
         title: "Delete Transaction",
         message: "Are you sure you want to permanently delete this transaction?",
         onConfirm: async () => {
-            try { await api.deleteTransaction(id, userId); await loadAllDataFromDB(); } catch (error) { console.error("Failed to delete transaction:", error); alert("Could not delete transaction."); }
+            try { await api.deleteTransaction(id, userId); await loadAllDataFromDB(); } catch (error) { console.error("Could not delete transaction:", error); alert("Could not delete the transaction."); }
             setConfirmation(null);
         }
     });
@@ -209,59 +205,39 @@ const App: React.FC = () => {
           return;
       }
 
-      const saveData = async (item: AnyTransactionFormData & { transactionType?: 'expense' | 'income' | 'transfer' }) => {
+      const saveData = async (item: AnyTransactionFormData & { transactionType?: 'expense' | 'income' }) => {
           const amount = typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount;
-          if (isNaN(amount) || amount <= 0) {
-              console.error("Invalid amount for item:", item);
-              return;
-          }
+          if (isNaN(amount) || amount <= 0) return;
 
-          let type = item.transactionType;
-          if (!type) {
-              if ('source' in item) type = 'income';
-              else type = 'expense';
-          }
-          
-          if (type === 'transfer') {
-              console.warn("Skipping transfer transaction:", item);
-              return;
-          }
-
-          const transactionData = { ...item, transactionType: type, amount };
+          const transactionData = { ...item, amount };
           
           try {
               if (item.id) {
                   await api.updateTransaction(item.id, transactionData, userId);
               } else {
                   await api.addTransaction(transactionData, userId);
-                  if (Notification.permission === 'granted') {
-                    const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
-                    new Notification("Transaction Saved", { body: `Saved a new ${type} of ${currencySymbol}${amount.toFixed(2)}.`, });
-                  }
               }
           } catch (error) {
               console.error("Failed to save transaction:", error);
-              alert("Could not save transaction.");
+              alert("Could not save the transaction.");
           }
       };
 
       if (Array.isArray(data)) {
-        for (const item of data) { await saveData(item); }
+        for (const item of data) { await saveData(item as any); }
       } else {
-        await saveData(data);
+        await saveData(data as any);
       }
       
       await loadAllDataFromDB();
-      setModalState({ mode: null, type: 'expense' }); // Close modal
+      setModalState({ mode: null, type: 'expense' });
       setTransactionToEdit(null);
-  }, [userId, loadAllDataFromDB, currency]);
+  }, [userId, loadAllDataFromDB]);
 
   const handleAddCategory = async (newCategoryName: string) => { try { await api.addExpenseCategory(newCategoryName); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); } };
   const handleDeleteCategory = async (categoryToDelete: string) => {
     setConfirmation({
-        isOpen: true,
-        title: "Delete Category",
-        message: `Are you sure you want to delete "${categoryToDelete}"? This cannot be undone.`,
+        isOpen: true, title: "Delete Category", message: `Delete "${categoryToDelete}"?`,
         onConfirm: async () => {
             try { await api.deleteExpenseCategory(categoryToDelete); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); }
             setConfirmation(null);
@@ -271,9 +247,7 @@ const App: React.FC = () => {
   const handleAddIncomeCategory = async (newCategory: string) => { try { await api.addIncomeCategory(newCategory); const fetched = await api.fetchIncomeCategories(); setIncomeCategories(fetched); } catch (e) { alert((e as Error).message); } };
   const handleDeleteIncomeCategory = async (categoryToDelete: string) => {
     setConfirmation({
-        isOpen: true,
-        title: "Delete Category",
-        message: `Are you sure you want to delete "${categoryToDelete}"? This cannot be undone.`,
+        isOpen: true, title: "Delete Category", message: `Delete "${categoryToDelete}"?`,
         onConfirm: async () => {
             try { await api.deleteIncomeCategory(categoryToDelete); const fetched = await api.fetchIncomeCategories(); setIncomeCategories(fetched); } catch (e) { alert((e as Error).message); }
             setConfirmation(null);
@@ -284,9 +258,7 @@ const App: React.FC = () => {
   const handleUpdateContact = (updatedContact: Contact) => setContacts(prev => prev.map(c => c.id === updatedContact.id ? updatedContact : c));
   const handleDeleteContact = (contactId: string) => {
     setConfirmation({
-        isOpen: true,
-        title: "Delete Contact",
-        message: "Are you sure you want to delete this contact?",
+        isOpen: true, title: "Delete Contact", message: "Are you sure?",
         onConfirm: () => {
             setContacts(prev => prev.filter(c => c.id !== contactId));
             setConfirmation(null);
@@ -338,14 +310,6 @@ const App: React.FC = () => {
               {renderPage()}
             </main>
             <BottomNav activePage={activePage} setActivePage={setActivePage} />
-            
-            {activePage === Page.SETTINGS && isUserSignedIn && (
-              <button onClick={() => setActivePage(Page.SUPPORT)} className="fixed bottom-[60px] sm:bottom-6 sm:right-6 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 bg-teal-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-teal-700 transition-transform transform hover:scale-110 z-50" aria-label="Open support chat">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24" fill="currentColor">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </button>
-            )}
           </div>
         </div>
 
@@ -360,16 +324,18 @@ const App: React.FC = () => {
             onCancel={() => setConfirmation(null)}
         />
       )}
-
-      {/* --- FIX: The modal's props are now derived from the reliable combined state --- */}
+      
+      {/* --- DEFINITIVE FIX: Pass both category lists and functions to the modal --- */}
       {modalState.mode && (
           <AddExpenseModal
               mode={modalState.mode}
               onClose={() => setModalState({ mode: null, type: 'expense' })}
               onSave={handleSaveTransaction}
               transactionToEdit={transactionToEdit}
-              categories={modalState.type === 'income' ? incomeCategories : categories}
-              onAddCategory={modalState.type === 'income' ? handleAddIncomeCategory : handleAddCategory}
+              expenseCategories={categories}
+              incomeCategories={incomeCategories}
+              onAddExpenseCategory={handleAddCategory}
+              onAddIncomeCategory={handleAddIncomeCategory}
               transactionType={modalState.type}
               accounts={accounts}
               contacts={contacts}
