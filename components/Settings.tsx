@@ -25,7 +25,7 @@ const SettingsListItem: React.FC<{
 }> = ({ label, onClick }) => (
      <button onClick={onClick} className="flex items-center justify-between w-full p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
         <span className="text-gray-800 dark:text-gray-200">{label}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><polyline points="12 5 19 12 12 19"></polyline></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><polyline points="12 5 19 12 12 19"></polyline></svg>
     </button>
 );
 
@@ -90,7 +90,7 @@ const SignedInView: React.FC<Omit<SettingsProps, 'isUserSignedIn' | 'setLoginPro
                         </div>
                     )}
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-full flex items-center justify-center transition-opacity">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                         </svg>
                     </div>
@@ -111,7 +111,6 @@ const SignedInView: React.FC<Omit<SettingsProps, 'isUserSignedIn' | 'setLoginPro
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                     <SettingsListItem label={t('expense_categories')} onClick={() => setActivePage(Page.EXPENSE_CATEGORIES)} />
                     <SettingsListItem label={t('income_categories')} onClick={() => setActivePage(Page.INCOME_CATEGORIES)} />
-                    <SettingsListItem label="Transfer Categories" onClick={() => setActivePage(Page.TRANSFER_CATEGORIES)} />
                 </div>
             </section>
 
@@ -175,7 +174,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const { t } = useTranslation();
 
   if (!isUserSignedIn) {
-    return <SignIn setActivePage={setActivePage} setLoginProvider={setLoginProvider} onGoogleLogin={onGoogleLogin} />;
+    return <SignIn setActivePage={setActivePage} setLoginProvider={setLoginProvider} onGoogleLogin={onGoogleLogin} isDarkMode={props.isDarkMode} />;
   }
 
   return (

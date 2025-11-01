@@ -309,7 +309,7 @@ const App: React.FC = () => {
     const currentUserName = isUserSignedIn ? userName : "Welcome";
     switch (activePage) {
       case Page.DASHBOARD: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} onDeleteExpense={handleDeleteTransaction} />;
-      case Page.HISTORY: return <History expenses={expenses} income={income} transfers={transfers} onEditTransaction={handleEditTransaction} onDeleteTransaction={handleDeleteTransaction} onAdd={(type) => handleOpenModal('manual', type)} setActivePage={setActivePage} currency={currency} />;
+      case Page.HISTORY: return <History expenses={expenses} income={income} transfers={transfers} onEditTransaction={handleEditTransaction} onDeleteTransaction={handleDeleteTransaction} onAdd={(type) => handleOpenModal('manual', type)} setActivePage={setActivePage} currency={currency} categories={categories} incomeCategories={incomeCategories} />;
       case Page.REPORTS: return <Reports expenses={expenses} isDarkMode={isDarkMode} isBankConnected={isBankConnected} setActivePage={setActivePage} setIsBankConnected={setIsBankConnected} currency={currency} />;
       case Page.SETTINGS: return <Settings isUserSignedIn={isUserSignedIn} onLogout={handleLogout} setActivePage={setActivePage} setLoginProvider={setLoginProvider} userName={userName} userEmail={userEmail} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} profilePhoto={profilePhoto} onGoogleLogin={handleLogin} />;
       case Page.LOGIN: return <Login onLogin={handleLogin} provider={loginProvider} setActivePage={setActivePage} />;
