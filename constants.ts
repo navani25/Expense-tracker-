@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Expense, Income, BudgetData, Contact, Bank, Category, Transfer } from './types';
+import type { Expense, Income, BudgetData, Contact, Bank, Category } from './types';
 
 // --- THIS IS THE CRITICAL FIX ---
 // We now use 'localhost', which is the standard name for your own computer.
@@ -89,31 +89,10 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/income-category/${encodeURIComponent(categoryToDelete)}`, { method: 'DELETE' });
     if (!response.ok) throw new Error('Failed to delete income category');
   },
-    
-  fetchTransferCategories: async (): Promise<Category[]> => {
-    const response = await fetch(`${API_BASE_URL}/transfer-categories`);
-    if (!response.ok) throw new Error('Failed to fetch transfer categories');
-    const { data } = await response.json();
-    return data;
-  },
-  addTransferCategory: async (newCategoryName: string): Promise<Category> => {
-    const response = await fetch(`${API_BASE_URL}/transfer-category`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newCategoryName }), });
-    if (!response.ok) throw new Error('Failed to add transfer category');
-    return await response.json();
-  },
-  deleteTransferCategory: async (categoryToDelete: string): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/transfer-category/${encodeURIComponent(categoryToDelete)}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Failed to delete transfer category');
-  },
 };
 
 
 // --- OTHER CONSTANTS ---
-export const TRANSFER_CATEGORIES: Category[] = [
-    { name: "Bill Payment", icon: "💸" }, { name: "Bank Transfer", icon: "🏦" },
-    { name: "Savings", icon: "🐷" }, { name: "Credit Card Payment", icon: "💳" },
-    { name: "Other", icon: "✋" },
-];
 export const INITIAL_ACCOUNTS: string[] = ["Cash", "Bank", "Wallet", "Credit Card", "UPI"];
 export const CURRENCIES = [
     { code: 'USD', name: 'United States Dollar', symbol: '$' }, { code: 'EUR', name: 'Euro', symbol: '€' },
