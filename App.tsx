@@ -1,39 +1,39 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import Welcome from './components/Welcome.tsx';
-import Dashboard from './components/Dashboard.tsx';
-import History from './components/History.tsx';
-import Reports from './components/Reports.tsx';
-import Settings from './components/Settings.tsx';
-import BottomNav from './components/BottomNav.tsx';
-import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, ExpenseFormData, IncomeFormData, TransferFormData, LoginProvider, ContactFormData } from './types.ts';
-import AddExpenseModal from './components/AddExpenseModal.tsx';
-import ExpenseCategories from './components/ExpenseCategories.tsx';
-import IncomeCategories from './components/IncomeCategories.tsx';
-import TransferCategories from './components/TransferCategories.tsx';
-import CurrencySettings from './components/CurrencySettings.tsx';
-import LanguageSettings from './components/LanguageSettings.tsx';
-import Contacts from './components/Contacts.tsx';
-import Legal from './components/Legal.tsx';
-import Login from './components/Login.tsx';
-import Signup from './components/Signup.tsx';
-import { CURRENCIES, BANKS, INITIAL_ACCOUNTS, TRANSFER_CATEGORIES, api, INITIAL_GUEST_EXPENSE_CATEGORIES, INITIAL_GUEST_INCOME_CATEGORIES } from './constants.ts';
-import { useDarkMode } from './hooks/useDarkMode.ts';
-import PrivacyPolicy from './components/PrivacyPolicy.tsx';
-import TermsOfService from './components/TermsOfService.tsx';
-import ConnectBank from './components/ConnectBank.tsx';
-import LinkAccount from './components/LinkAccount.tsx';
-import ProfilePhoto from './components/ProfilePhoto.tsx';
-import ProfileSettings from './components/ProfileSettings.tsx';
-import Support from './components/Support.tsx';
-import { useTranslation } from './components/LanguageProvider.tsx';
-import Sidebar from './components/Sidebar.tsx';
-import ForgotEmail from './components/ForgotEmail.tsx';
-import CreateAccount from './components/CreateAccount.tsx';
-import ForgotPassword from './components/ForgotPassword.tsx';
-import Licenses from './components/Licenses.tsx';
-import SignInPromptModal from './components/SignInPromptModal.tsx';
-import DemoReport from './components/DemoReport.tsx';
-import ConfirmationModal from './components/ConfirmationModal.tsx';
+import Welcome from './components/Welcome';
+import Dashboard from './components/Dashboard';
+import History from './components/History';
+import Reports from './components/Reports';
+import Settings from './components/Settings';
+import BottomNav from './components/BottomNav';
+import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, ExpenseFormData, IncomeFormData, TransferFormData, LoginProvider, ContactFormData } from './types';
+import AddExpenseModal from './components/AddExpenseModal';
+import ExpenseCategories from './components/ExpenseCategories';
+import IncomeCategories from './components/IncomeCategories';
+import TransferCategories from './components/TransferCategories';
+import CurrencySettings from './components/CurrencySettings';
+import LanguageSettings from './components/LanguageSettings';
+import Contacts from './components/Contacts';
+import Legal from './components/Legal';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import { CURRENCIES, BANKS, INITIAL_ACCOUNTS, TRANSFER_CATEGORIES, api, INITIAL_GUEST_EXPENSE_CATEGORIES, INITIAL_GUEST_INCOME_CATEGORIES } from './constants';
+import { useDarkMode } from './hooks/useDarkMode';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
+import ConnectBank from './components/ConnectBank';
+import LinkAccount from './components/LinkAccount';
+import ProfilePhoto from './components/ProfilePhoto';
+import ProfileSettings from './components/ProfileSettings';
+import Support from './components/Support';
+import { useTranslation } from './components/LanguageProvider';
+import Sidebar from './components/Sidebar';
+import ForgotEmail from './components/ForgotEmail';
+import CreateAccount from './components/CreateAccount';
+import ForgotPassword from './components/ForgotPassword';
+import Licenses from './components/Licenses';
+import SignInPromptModal from './components/SignInPromptModal';
+import DemoReport from './components/DemoReport';
+import ConfirmationModal from './components/ConfirmationModal';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
@@ -222,16 +222,8 @@ const App: React.FC = () => {
               type = 'transfer';
           } else if ('source' in item) {
               type = 'income';
-          } else if ('vendor' in item) {
-              type = 'expense';
           } else {
-              // Fallback logic based on item.transactionType if available, or error
-              if(item.transactionType) {
-                type = item.transactionType;
-              } else {
-                console.error("Could not determine transaction type for item:", item);
-                return; // Skip saving this item
-              }
+              type = 'expense';
           }
 
           const transactionData = { ...item, transactionType: type, amount };
@@ -261,7 +253,7 @@ const App: React.FC = () => {
       await loadAllDataFromDB();
       setModalMode(null);
       setTransactionToEdit(null);
-  }, [userId, loadAllDataFromDB, currency]);
+  }, [userId, loadAllDataFromDB, currency]); // Removed `transactionType` as a dependency
 
   const handleAddCategory = async (newCategoryName: string) => { try { await api.addExpenseCategory(newCategoryName); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); } };
   const handleDeleteCategory = async (categoryToDelete: string) => {
@@ -307,13 +299,13 @@ const App: React.FC = () => {
     if (isLoading) { return <LoadingSpinner />; }
     const currentUserName = isUserSignedIn ? userName : "Welcome";
     switch (activePage) {
-      case Page.DASHBOARD: return <Dashboard openModal={(mode, type) => handleOpenModal(mode, type)} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      case Page.DASHBOARD: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
       case Page.HISTORY: return <History expenses={expenses} income={income} transfers={transfers} onEditTransaction={handleEditTransaction} onDeleteTransaction={handleDeleteTransaction} onAdd={(type) => handleOpenModal('manual', type)} setActivePage={setActivePage} currency={currency} />;
       case Page.REPORTS: return <Reports expenses={expenses} isDarkMode={isDarkMode} isBankConnected={isBankConnected} setActivePage={setActivePage} setIsBankConnected={setIsBankConnected} currency={currency} />;
       case Page.SETTINGS: return <Settings isUserSignedIn={isUserSignedIn} onLogout={handleLogout} setActivePage={setActivePage} setLoginProvider={setLoginProvider} userName={userName} userEmail={userEmail} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} profilePhoto={profilePhoto} onGoogleLogin={handleLogin} />;
       case Page.LOGIN: return <Login onLogin={handleLogin} provider={loginProvider} setActivePage={setActivePage} />;
       case Page.SIGNUP: return <Signup onSignup={() => handleLogin()} setActivePage={setActivePage} />;
-      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} />;
+      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} transfers={transfers} />;
        case Page.FORGOT_EMAIL: return <ForgotEmail setActivePage={setActivePage} />;
       case Page.CREATE_ACCOUNT: return <CreateAccount onSignup={handleLogin} setActivePage={setActivePage} />;
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
@@ -332,7 +324,7 @@ const App: React.FC = () => {
       case Page.LINK_ACCOUNT: return <LinkAccount setActivePage={setActivePage} bank={selectedBank} onConnect={() => {setIsBankConnected(true); setActivePage(Page.REPORTS);}} />;
       case Page.PROFILE_PHOTO: return <ProfilePhoto setActivePage={setActivePage} currentPhoto={profilePhoto} onPhotoChange={setProfilePhoto} userName={userName} />;
       case Page.DEMO_REPORT: return <DemoReport setActivePage={setActivePage} isDarkMode={isDarkMode} />;
-      default: return <Dashboard openModal={(mode, type) => handleOpenModal(mode, type)} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      default: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
     }
   };
 
@@ -393,4 +385,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

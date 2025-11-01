@@ -4,7 +4,7 @@ import { useTranslation } from './LanguageProvider';
 import { CURRENCIES } from '../constants';
 
 interface DashboardProps {
-  openModal: (mode: 'manual' | 'voice' | 'receipt', type?: 'expense' | 'income' | 'transfer') => void;
+  openModal: (mode: 'manual' | 'voice' | 'receipt') => void;
   expenses: Expense[];
   income: Income[];
   transfers: Transfer[];
@@ -14,7 +14,7 @@ interface DashboardProps {
   onEditExpense: (expense: Expense) => void;
 }
 
-const DashboardEmptyState: React.FC<{ openModal: (mode: 'manual', type?: 'expense') => void }> = ({ openModal }) => (
+const DashboardEmptyState: React.FC<{ openModal: (mode: 'manual') => void }> = ({ openModal }) => (
     <div className="text-center p-8 my-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg animate-fade-in-up">
         <div className="w-20 h-20 mx-auto bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center mb-5">
             <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 dark:text-violet-400">
@@ -29,7 +29,7 @@ const DashboardEmptyState: React.FC<{ openModal: (mode: 'manual', type?: 'expens
             Ready to track your finances? Add your first expense to get started.
         </p>
         <button
-            onClick={() => openModal('manual', 'expense')}
+            onClick={() => openModal('manual')}
             className="py-3 px-8 bg-violet-600 text-white font-semibold rounded-lg shadow-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-transform transform hover:scale-105"
         >
             Add First Expense
@@ -135,38 +135,27 @@ const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, user
               </div>
             </div>
           ) : (
-            <DashboardEmptyState openModal={(mode) => openModal(mode, 'expense')} />
+            <DashboardEmptyState openModal={() => openModal('manual')} />
           )}
 
-          {/* FIX 2: Change to four explicit Quick Action buttons for better UX */}
-          <div className="grid grid-cols-4 gap-4">
-              {/* Add Expense (Manual) */}
+          <div className="grid grid-cols-3 gap-4">
               <QuickActionButton
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 w-6 h-6"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="20" x2="18" y2="14"/><line x1="15" y1="17" x2="21" y2="17"/></svg>}
-                label={t('expenses')}
-                onClick={() => openModal('manual', 'expense')}
-                className="bg-red-50 dark:bg-red-900/20 col-span-1"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
+                label={t('add')}
+                onClick={() => openModal('manual')}
+                className="bg-violet-50 dark:bg-violet-900/20"
               />
-              {/* Add Income (Manual) - New explicit button */}
               <QuickActionButton
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500 w-6 h-6"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="14" x2="18" y2="20"/><line x1="15" y1="17" x2="21" y2="17"/></svg>}
-                label={t('income')}
-                onClick={() => openModal('manual', 'income')}
-                className="bg-green-50 dark:bg-green-900/20 col-span-1"
-              />
-              {/* Voice Entry */}
-              <QuickActionButton
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 w-6 h-6"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500 w-6 h-6"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>}
                 label={t('voice')}
-                onClick={() => openModal('voice')} // Still defaults to expense, as expected for general entry
-                className="bg-violet-50 dark:bg-violet-900/20 col-span-1"
+                onClick={() => openModal('voice')}
+                className="bg-green-50 dark:bg-green-900/20"
               />
-              {/* Receipt Scan */}
               <QuickActionButton
                 icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 w-6 h-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>}
                 label={t('receipt')}
-                onClick={() => openModal('receipt')} // Still defaults to expense, as expected for scanning
-                className="bg-purple-50 dark:bg-purple-900/20 col-span-1"
+                onClick={() => openModal('receipt')}
+                className="bg-purple-50 dark:bg-purple-900/20"
               />
           </div>
         </div>
