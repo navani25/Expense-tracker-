@@ -1,0 +1,8 @@
+{
+  "name": "Ledgerly",
+  "description": "A smart expense tracking app to manage your finances with ease. Log expenses via voice, manual entry, or receipt scanning.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

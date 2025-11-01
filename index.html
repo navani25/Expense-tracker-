@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cg transform='rotate(-15 15 22)'%3e%3crect x='5' y='5' width='20' height='30' rx='3' fill='white' stroke='%23004D40' stroke-width='2' /%3e%3cpath d='M15 25 L15 15 M12 18 L15 15 L18 18' stroke='%23004D40' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/g%3e%3cg%3e%3crect x='15' y='5' width='20' height='30' rx='3' fill='white' stroke='%23004D40' stroke-width='2' /%3e%3cpath d='M25 15 L25 25 M22 22 L25 25 L28 22' stroke='%23004D40' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3cpath d='M22 12 L24 14 L28 10' stroke='%23FB8C00' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/g%3e%3c/svg%3e" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledgerly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
+    <style>
+      @keyframes fade-in-up {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.8s ease-out forwards;
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      body {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

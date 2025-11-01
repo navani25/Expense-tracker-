@@ -1,0 +1,15 @@
+import React from 'react';
+
+interface HeaderProps {
+  title: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ title }) => {
+  return (
+    <header className="bg-white dark:bg-gray-800 shadow-sm p-4 sticky top-0 z-10">
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">{title}</h1>
+    </header>
+  );
+};
+
+export default Header;
