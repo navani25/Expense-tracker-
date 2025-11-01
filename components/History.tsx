@@ -46,7 +46,8 @@ const ExpenseListItem: React.FC<{ expense: Expense; currencySymbol: string; onEd
                 {icon}
             </div>
             <div className="min-w-0">
-                <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{expense.vendor || expense.notes}</p>
+                {/* --- TITLE FIX: Prioritize `notes` (Title) over `vendor` --- */}
+                <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{expense.notes || expense.vendor || 'Expense'}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{expense.category || 'Uncategorized'}</p>
             </div>
         </div>
@@ -55,7 +56,6 @@ const ExpenseListItem: React.FC<{ expense: Expense; currencySymbol: string; onEd
                 <p className="font-bold text-red-600 dark:text-red-400">-{currencySymbol}{expense.amount.toFixed(2)}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(expense.date).toLocaleDateString()}</p>
             </div>
-            {/* --- ICONS UPDATED HERE --- */}
             <button onClick={() => onEdit(expense)} className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 rounded-full focus:outline-none" aria-label="Edit expense">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
             </button>
@@ -73,7 +73,8 @@ const IncomeListItem: React.FC<{ income: Income; currencySymbol: string; onEdit:
                 {icon}
             </div>
             <div className="min-w-0">
-                <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{income.source || income.notes}</p>
+                {/* --- TITLE FIX: Prioritize `notes` (Title) over `source` --- */}
+                <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{income.notes || income.source || 'Income'}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{income.category || 'Uncategorized'}</p>
             </div>
         </div>
@@ -82,7 +83,6 @@ const IncomeListItem: React.FC<{ income: Income; currencySymbol: string; onEdit:
                 <p className="font-bold text-green-600 dark:text-green-400">+{currencySymbol}{income.amount.toFixed(2)}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(income.date).toLocaleDateString()}</p>
             </div>
-            {/* --- ICONS UPDATED HERE --- */}
             <button onClick={() => onEdit(income)} className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 rounded-full focus:outline-none" aria-label="Edit income">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
             </button>
@@ -96,10 +96,10 @@ const IncomeListItem: React.FC<{ income: Income; currencySymbol: string; onEdit:
 interface HistoryProps {
     expenses: Expense[];
     income: Income[];
-    transfers: Transfer[]; // Keep this prop for data integrity, though it won't be displayed
+    transfers: Transfer[];
     onEditTransaction: (transaction: Expense | Income | Transfer) => void;
     onDeleteTransaction: (id: string | number) => void;
-    onAdd: (type: 'expense' | 'income') => void; // Removed 'transfer'
+    onAdd: (type: 'expense' | 'income') => void;
     setActivePage: (page: Page) => void;
     currency: string;
     categories: Category[];

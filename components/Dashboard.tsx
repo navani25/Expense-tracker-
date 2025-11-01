@@ -66,7 +66,8 @@ const ExpenseItem: React.FC<{
                     {expense.category ? expense.category.charAt(0).toUpperCase() : '?'}
                 </div>
                 <div className="min-w-0">
-                    <p className="font-semibold text-base text-gray-800 dark:text-gray-100 truncate">{expense.vendor || expense.notes || "Expense"}</p>
+                    {/* --- TITLE FIX: Prioritize `notes` (Title) over `vendor` --- */}
+                    <p className="font-semibold text-base text-gray-800 dark:text-gray-100 truncate">{expense.notes || expense.vendor || "Expense"}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(expense.date.replace(/-/g, '\/')).toLocaleDateString()}</p>
                 </div>
             </div>
@@ -147,7 +148,6 @@ const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, user
             <DashboardEmptyState openModal={() => openModal('manual')} />
           )}
 
-          {/* --- VOICE AND RECEIPT BUTTONS RESTORED HERE --- */}
           <div className="grid grid-cols-3 gap-4">
               <QuickActionButton
                 icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
@@ -162,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, user
                 className="bg-green-50 dark:bg-green-900/20"
               />
               <QuickActionButton
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 w-6 h-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 w-6 h-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>}
                 label={t('receipt')}
                 onClick={() => openModal('receipt')}
                 className="bg-purple-50 dark:bg-purple-900/20"
