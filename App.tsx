@@ -9,7 +9,7 @@ import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactio
 import AddExpenseModal from './components/AddExpenseModal';
 import ExpenseCategories from './components/ExpenseCategories';
 import IncomeCategories from './components/IncomeCategories';
-import TransferCategories from './components/TransferCategories';
+// import TransferCategories from './components/TransferCategories'; // Removed
 import CurrencySettings from './components/CurrencySettings';
 import LanguageSettings from './components/LanguageSettings';
 import Contacts from './components/Contacts';
@@ -55,13 +55,13 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]); // Keep for data integrity, but remove UI
   const [categories, setCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
-  const [transferCategories, setTransferCategories] = useState<Category[]>(TRANSFER_CATEGORIES);
+  // const [transferCategories, setTransferCategories] = useState<Category[]>(TRANSFER_CATEGORIES); // Removed
   
   const [modalMode, setModalMode] = useState<'manual' | 'voice' | 'receipt' | null>(null);
-  const [transactionType, setTransactionType] = useState<'expense' | 'income' | 'transfer'>('expense');
+  const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense'); // Removed 'transfer'
   const [transactionToEdit, setTransactionToEdit] = useState<Expense | Income | Transfer | null>(null);
 
   const [isUserSignedIn, setIsUserSignedIn] = useState(false);
@@ -167,7 +167,7 @@ const App: React.FC = () => {
     setUserName(fullName);
   };
 
-  const handleOpenModal = useCallback((mode: 'manual' | 'voice' | 'receipt', type: 'expense' | 'income' | 'transfer' = 'expense') => {
+  const handleOpenModal = useCallback((mode: 'manual' | 'voice' | 'receipt', type: 'expense' | 'income' = 'expense') => {
     if(!isUserSignedIn){ setIsSignInPromptOpen(true); return; }
     setTransactionType(type);
     setTransactionToEdit(null);
@@ -183,7 +183,7 @@ const App: React.FC = () => {
   const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
     if ('vendor' in transaction) setTransactionType('expense');
     else if ('source' in transaction) setTransactionType('income');
-    else setTransactionType('transfer');
+    // Removed transfer logic
     setTransactionToEdit(transaction);
     setModalMode('manual');
   }, []);
@@ -216,14 +216,23 @@ const App: React.FC = () => {
               return;
           }
 
-          // This robust logic checks for unique properties to determine the type correctly.
-          let type: 'expense' | 'income' | 'transfer';
-          if ('fromAccount' in item && 'toAccount' in item) {
-              type = 'transfer';
-          } else if ('source' in item) {
-              type = 'income';
-          } else {
-              type = 'expense';
+          // --- FIX: Trust the transactionType from the modal (AI or manual) ---
+          let type = item.transactionType;
+          if (!type) {
+              // Fallback logic, though this shouldn't be hit with the modal fix
+              if ('fromAccount' in item && 'toAccount' in item) {
+                  type = 'transfer';
+              } else if ('source' in item) {
+                  type = 'income';
+              } else {
+                  type = 'expense';
+              }
+          }
+          
+          // --- User request: Do not save transfers from this flow ---
+          if (type === 'transfer') {
+              console.warn("Skipping transfer transaction:", item);
+              return; // Simply don't save it
           }
 
           const transactionData = { ...item, transactionType: type, amount };
@@ -279,7 +288,7 @@ const App: React.FC = () => {
         }
     });
   };
-  const handleAddTransferCategory = (newCategory: string) => { if (!transferCategories.find(c => c.name.toLowerCase() === newCategory.toLowerCase())) { setTransferCategories(prev => [...prev, { name: newCategory, icon: '🏷️' }]); } };
+  // const handleAddTransferCategory = (newCategory: string) => { if (!transferCategories.find(c => c.name.toLowerCase() === newCategory.toLowerCase())) { setTransferCategories(prev => [...prev, { name: newCategory, icon: '🏷️' }]); } }; // Removed
   const handleAddContact = (contact: ContactFormData) => { const newContact: Contact = { ...contact, id: `c_${Date.now()}`, avatarColor: ['bg-blue-500', 'bg-pink-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500'][Math.floor(Math.random() * 5)] }; setContacts(prev => [newContact, ...prev]); };
   const handleUpdateContact = (updatedContact: Contact) => setContacts(prev => prev.map(c => c.id === updatedContact.id ? updatedContact : c));
   const handleDeleteContact = (contactId: string) => {
@@ -305,14 +314,14 @@ const App: React.FC = () => {
       case Page.SETTINGS: return <Settings isUserSignedIn={isUserSignedIn} onLogout={handleLogout} setActivePage={setActivePage} setLoginProvider={setLoginProvider} userName={userName} userEmail={userEmail} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} profilePhoto={profilePhoto} onGoogleLogin={handleLogin} />;
       case Page.LOGIN: return <Login onLogin={handleLogin} provider={loginProvider} setActivePage={setActivePage} />;
       case Page.SIGNUP: return <Signup onSignup={() => handleLogin()} setActivePage={setActivePage} />;
-      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} transfers={transfers} />;
+      case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} />;
        case Page.FORGOT_EMAIL: return <ForgotEmail setActivePage={setActivePage} />;
       case Page.CREATE_ACCOUNT: return <CreateAccount onSignup={handleLogin} setActivePage={setActivePage} />;
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
       case Page.PROFILE_SETTINGS: return <ProfileSettings setActivePage={setActivePage} currentName={userName} currentEmail={userEmail} onSave={handleSaveProfile} />;
       case Page.EXPENSE_CATEGORIES: return <ExpenseCategories setActivePage={setActivePage} categories={categories.map(c => c.name)} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />;
       case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories.map(c => c.name)} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteIncomeCategory} />;
-      case Page.TRANSFER_CATEGORIES: return <TransferCategories setActivePage={setActivePage} categories={transferCategories.map(c => c.name)} onAddCategory={handleAddTransferCategory} />;
+      // case Page.TRANSFER_CATEGORIES: return <TransferCategories setActivePage={setActivePage} categories={transferCategories.map(c => c.name)} onAddCategory={handleAddTransferCategory} />; // Removed
       case Page.CURRENCY_SETTINGS: return <CurrencySettings setActivePage={setActivePage} selectedCurrency={currency} setSelectedCurrency={setCurrency} />;
       case Page.LANGUAGE_SETTINGS: return <LanguageSettings setActivePage={setActivePage} />;
       case Page.CONTACTS: return <Contacts setActivePage={setActivePage} contacts={contacts} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} onDeleteContact={handleDeleteContact} />;
@@ -342,7 +351,7 @@ const App: React.FC = () => {
             
             {activePage === Page.SETTINGS && isUserSignedIn && (
               <button onClick={() => setActivePage(Page.SUPPORT)} className="fixed bottom-[60px] sm:bottom-6 sm:right-6 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 bg-teal-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-teal-700 transition-transform transform hover:scale-110 z-50" aria-label="Open support chat">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24" fill="currentColor">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
               </button>
@@ -370,10 +379,10 @@ const App: React.FC = () => {
               transactionToEdit={transactionToEdit}
               categories={categories}
               incomeCategories={incomeCategories}
-              transferCategories={transferCategories}
+              transferCategories={[]} // Pass empty array
               onAddCategory={handleAddCategory}
               onAddIncomeCategory={handleAddIncomeCategory}
-              onAddTransferCategory={handleAddTransferCategory}
+              onAddTransferCategory={() => {}} // Pass empty function
               transactionType={transactionType}
               accounts={accounts}
               contacts={contacts}

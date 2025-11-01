@@ -19,11 +19,11 @@ interface AddExpenseModalProps {
   transactionToEdit: Expense | Income | Transfer | null;
   categories: Category[];
   incomeCategories: Category[];
-  transferCategories: Category[];
+  transferCategories: Category[]; // Kept in props for compatibility, but will be unused
   onAddCategory: (name: string) => void;
   onAddIncomeCategory: (name: string) => void;
-  onAddTransferCategory: (name: string) => void;
-  transactionType: 'expense' | 'income' | 'transfer';
+  onAddTransferCategory: (name: string) => void; // Kept in props for compatibility
+  transactionType: 'expense' | 'income'; // Removed 'transfer'
   accounts: string[];
   contacts: Contact[];
   userName: string;
@@ -111,7 +111,7 @@ const CategoryPickerButton: React.FC<{ categoryName: string; onClick: () => void
         <span className="mr-2 text-xl">{category?.icon || '🏷️'}</span>
         <span className="truncate">{category?.name || 'Select Category'}</span>
       </span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 ml-2 flex-shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 ml-2 flex-shrink-0">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     </button>
@@ -124,10 +124,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
   const isEditing = transactionToEdit !== null;
   const { language } = useTranslation();
   
-  type ActiveTab = 'expense' | 'income' | 'transfer';
+  type ActiveTab = 'expense' | 'income'; // Removed 'transfer'
   type ModalView = 'tabs' | 'voice' | 'receipt';
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>(isEditing ? 'expense' : transactionType);
+  // --- FIX: Correctly set initial tab based on edit/create mode ---
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (isEditing && transactionToEdit) {
+        if ('source' in transactionToEdit) return 'income';
+    }
+    if (transactionType === 'income') return 'income';
+    return 'expense';
+  });
+  
   const [view, setView] = useState<ModalView>(mode === 'manual' ? 'tabs' : mode);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -175,18 +183,14 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
       } else if ('source' in transactionToEdit) {
         fullData.source = transactionToEdit.source || '';
         setActiveTab('income');
-      } else if ('fromAccount' in transactionToEdit) {
-        fullData.fromAccount = transactionToEdit.fromAccount || '';
-        fullData.toAccount = transactionToEdit.toAccount || '';
-        setActiveTab('transfer');
-      }
+      } 
+      // Removed 'fromAccount' / 'transfer' logic
       
       setFormData(fullData);
       setView('tabs');
     } else {
         const defaultCategory = 
             activeTab === 'income' && incomeCategories.length > 0 ? incomeCategories[0].name :
-            activeTab === 'transfer' && transferCategories.length > 0 ? transferCategories[0].name :
             categories.length > 0 ? categories[0].name : '';
         setFormData({
             ...initialFormData,
@@ -205,7 +209,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
   const handleAddCustomCategory = (categoryName: string) => {
     if (activeTab === 'expense') onAddCategory(categoryName);
     else if (activeTab === 'income') onAddIncomeCategory(categoryName);
-    else onAddTransferCategory(categoryName);
+    // Removed transfer logic
 
     setFormData(prev => ({ ...prev, category: categoryName }));
     setIsAddCustomCategoryModalOpen(false);
@@ -242,7 +246,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-      // schema kept as before (keeps responseSchema for structured output)
+      // --- FIX: Simplified schema, removed 'transfer' ---
       const schema = {
         type: Type.ARRAY,
         items: {
@@ -250,8 +254,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
           properties: {
             transactionType: {
               type: Type.STRING,
-              description: 'Type of transaction, must be one of: "expense", "income", or "transfer".',
-              enum: ['expense', 'income', 'transfer'],
+              description: 'Type of transaction, must be one of: "expense" or "income".',
+              enum: ['expense', 'income'],
             },
             amount: { type: Type.NUMBER, description: 'Amount of the transaction.' },
             category: { type: Type.STRING },
@@ -259,8 +263,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
             notes: { type: Type.STRING },
             vendor: { type: Type.STRING },
             source: { type: Type.STRING },
-            fromAccount: { type: Type.STRING },
-            toAccount: { type: Type.STRING },
           },
         },
       };
@@ -305,7 +307,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
 
       // Basic validation: ensure at least one item has transactionType and amount
       const valid = parsedData.every((item: any) => {
-        if (!item.transactionType || !['expense','income','transfer'].includes(item.transactionType)) return false;
+        if (!item.transactionType || !['expense','income'].includes(item.transactionType)) return false; // Removed 'transfer'
         if (item.amount === undefined || item.amount === null || isNaN(Number(item.amount))) return false;
         return true;
       });
@@ -466,26 +468,27 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
   const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       
-      let dataToSave: AnyTransactionFormData;
+      let dataToSave: (AnyTransactionFormData & { transactionType: 'expense' | 'income' });
 
-      if (activeTab === 'transfer') {
-        if (formData.fromAccount === formData.toAccount) {
-            alert("From and To accounts cannot be the same.");
-            return;
-        }
-        const { amount, category, date, notes, fromAccount, toAccount } = formData;
-        dataToSave = { amount, category, date, notes, fromAccount, toAccount, id: isEditing ? transactionToEdit?.id : undefined };
-      } else if (activeTab === 'income') {
+      if (activeTab === 'income') {
         const { amount, category, date, notes, source } = formData;
-        dataToSave = { amount, category, date, notes, source, id: isEditing ? transactionToEdit?.id : undefined };
-      } else {
+        dataToSave = { 
+            transactionType: 'income', 
+            amount, category, date, notes, source, 
+            id: isEditing ? transactionToEdit?.id : undefined 
+        };
+      } else { // 'expense'
         const { amount, category, date, notes, vendor } = formData;
-        dataToSave = { amount, category, date, notes, vendor, id: isEditing ? transactionToEdit?.id : undefined };
+        dataToSave = { 
+            transactionType: 'expense', 
+            amount, category, date, notes, vendor, 
+            id: isEditing ? transactionToEdit?.id : undefined 
+        };
       }
       onSave(dataToSave);
   };
 
-  const currentCategories = activeTab === 'income' ? incomeCategories : activeTab === 'transfer' ? transferCategories : categories;
+  const currentCategories = activeTab === 'income' ? incomeCategories : categories;
   
   const renderContent = () => {
     if (view === 'voice') {
@@ -493,19 +496,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
     }
     
     if (view === 'receipt') {
-        return ( <div className="p-8 text-center flex flex-col items-center justify-center min-h-[300px]"> {!receiptImage ? ( <> <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 mb-4"> <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path> </svg> <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Upload a Receipt</h3> <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Let AI scan it and fill out the details for you.</p> <input type="file" ref={fileInputRef} onChange={handleFileInputChange} accept="image/*" className="hidden" /> <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 px-4 bg-violet-600 text-white font-semibold rounded-lg shadow-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500" > Select Image </button> </> ) : ( <> <div className="relative w-full max-h-48 mb-4 rounded-lg overflow-hidden"> <img src={receiptImage} alt="Receipt preview" className="w-full h-full object-contain" /> {isProcessing && ( <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center text-white"> <svg className="animate-spin h-8 w-8 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p className="font-semibold">{statusText}</p> </div> )} </div> {statusText && !isProcessing && ( <p className="text-sm text-red-500 mb-4">{statusText}</p> )} <button onClick={() => setReceiptImage(null)} disabled={isProcessing} className="w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50" > Choose another image </button> </> )} </div> );
+        return ( <div className="p-8 text-center flex flex-col items-center justify-center min-h-[300px]"> {!receiptImage ? ( <> <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 mb-4"> <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path> </svg> <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Upload a Receipt</h3> <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Let AI scan it and fill out the details for you.</p> <input type="file" ref={fileInputRef} onChange={handleFileInputChange} accept="image/*" className="hidden" /> <button onClick={() => fileInputRef.current?.click()} className="w-full py-3 px-4 bg-violet-600 text-white font-semibold rounded-lg shadow-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500" > Select Image </button> </> ) : ( <> <div className="relative w-full max-h-48 mb-4 rounded-lg overflow-hidden"> <img src={receiptImage} alt="Receipt preview" className="w-full h-full object-contain" /> {isProcessing && ( <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center text-white"> <svg className="animate-spin h-8 w-8 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p className="font-semibold">{statusText}</p> </div> )} </div> {statusText && !isProcessing && ( <p className="text-sm text-red-500 mb-4">{statusText}</p> )} <button onClick={() => setReceiptImage(null)} disabled={isProcessing} className="w-full py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50" > Choose another image </button> </> )} </div> );
     }
     
     if (view === 'tabs') {
-      const saveButtonText = isEditing ? 'Update' : activeTab === 'income' ? 'Save Income' : activeTab === 'transfer' ? 'Save Transfer' : 'Save Expense';
+      const saveButtonText = isEditing ? 'Update' : activeTab === 'income' ? 'Save Income' : 'Save Expense';
       return (
         <>
           <div className="p-4">
             {!isEditing && (
-              <div className="grid grid-cols-3 gap-1 p-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg mb-4">
+              <div className="grid grid-cols-2 gap-1 p-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg mb-4">
                   <TabButton label="Expense" active={activeTab === 'expense'} onClick={() => setActiveTab('expense')} />
                   <TabButton label="Income" active={activeTab === 'income'} onClick={() => setActiveTab('income')} />
-                  <TabButton label="Transfer" active={activeTab === 'transfer'} onClick={() => setActiveTab('transfer')} />
               </div>
             )}
             <form className="space-y-4" onSubmit={handleSubmit}>
@@ -514,8 +516,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
 
               {activeTab === 'income' && <> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Title</label> <input type="text" name="notes" value={formData.notes} onChange={handleInputChange} placeholder="e.g., Monthly Salary" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" /> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Source</label> <input type="text" name="source" value={formData.source} onChange={handleInputChange} placeholder="e.g., Client Project" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" /> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</label> <input type="number" name="amount" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required/> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Category</label> <CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={incomeCategories} /> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Date</label> <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required/> </div> </>}
 
-              {/* --- Transfer Section Only --- */}
-              {activeTab === 'transfer' && <> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Title</label> <input type="text" name="notes" value={formData.notes} onChange={handleInputChange} placeholder="e.g., Transfer to savings" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" /> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</label> <input type="number" name="amount" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required/> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Category</label> <CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={transferCategories} /> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">From</label> <div className="relative mt-1"> <select name="fromAccount" value={formData.fromAccount} onChange={handleInputChange} className="w-full appearance-none px-4 py-3 pr-10 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"> {peopleList.map(person => <option key={person.id} value={person.name}>{person.name}</option>)} </select> <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <polyline points="6 9 12 15 18 9"></polyline> </svg> </div> </div> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Transferred To</label> <div className="relative mt-1"> <select name="toAccount" value={formData.toAccount} onChange={handleInputChange} className="w-full appearance-none px-4 py-3 pr-10 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"> {peopleList.filter(acc => acc.name !== formData.fromAccount).map(person => <option key={person.id} value={person.name}>{person.name}</option>)} </select> <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <polyline points="6 9 12 15 18 9"></polyline> </svg> </div> </div> </div> <div> <label className="text-sm font-medium text-gray-600 dark:text-gray-300">When</label> <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required/> </div> </>}
+                  {/* --- Transfer Section Removed --- */}
 
               <div className="pt-2">
                   <button type="submit" className="w-full bg-violet-600 text-white py-3 rounded-lg hover:bg-violet-700 font-semibold">
@@ -551,7 +552,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
     if (view === 'receipt') return 'Upload Receipt';
     switch(activeTab) {
       case 'income': return 'Add Income';
-      case 'transfer': return 'Add Transfer';
       case 'expense':
       default:
         return 'Add Expense';
@@ -564,7 +564,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
             <header className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{getTitle()}</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </header>
             {renderContent()}
