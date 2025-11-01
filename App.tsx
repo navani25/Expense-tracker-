@@ -325,7 +325,6 @@ const App: React.FC = () => {
         />
       )}
       
-      {/* --- DEFINITIVE FIX: Pass both category lists and functions to the modal --- */}
       {modalState.mode && (
           <AddExpenseModal
               mode={modalState.mode}
