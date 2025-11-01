@@ -180,8 +180,8 @@ const App: React.FC = () => {
   }, []);
   
   const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
-    // --- DEFINITIVE FIX: Use a reliable check. Only Expenses have a 'vendor' property. ---
-    const type = 'vendor' in transaction ? 'expense' : 'income';
+    // --- DEFINITIVE FIX: Reliably check if it's an Income. If not, it MUST be an Expense. ---
+    const type = 'source' in transaction ? 'income' : 'expense';
     setTransactionToEdit(transaction);
     setModalState({ mode: 'manual', type });
   }, []);
