@@ -125,13 +125,13 @@ const TransferListItem: React.FC<{ transfer: Transfer; currencySymbol: string; o
 <div className="flex items-center gap-3">
 <button
   onClick={() => onEdit(transfer)}
-  className="p-2 text-gray-400 hover:text-violet-600 rounded-full focus:outline-none transition duration-200"
+  className="p-1 text-gray-400 hover:text-violet-600 rounded-full focus:outline-none transition duration-200"
   aria-label="Edit transfer"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
+    width="14"
+    height="14"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -145,13 +145,13 @@ const TransferListItem: React.FC<{ transfer: Transfer; currencySymbol: string; o
 
 <button
   onClick={() => onDelete(transfer.id)}
-  className="p-2 text-gray-400 hover:text-red-600 rounded-full focus:outline-none transition duration-200"
+  className="p-1 text-gray-400 hover:text-red-600 rounded-full focus:outline-none transition duration-200"
   aria-label="Delete transfer"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -165,6 +165,7 @@ const TransferListItem: React.FC<{ transfer: Transfer; currencySymbol: string; o
     <line x1="14" y1="11" x2="14" y2="17"></line>
   </svg>
 </button>
+
 
 </div>
 
