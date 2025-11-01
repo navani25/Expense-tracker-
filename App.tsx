@@ -371,24 +371,34 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* --- FIX START --- */}
+      {/*
+        The logic here is to pass only one list of categories to the modal.
+        We check the `transactionType` state:
+        - If it's 'income', we pass the `incomeCategories` list and the function to add a new income category.
+        - Otherwise, we default to passing the standard `categories` (for expenses) and the function to add an expense category.
+        This ensures the modal always shows the correct list without needing its own internal logic.
+      */}
       {modalMode && (
           <AddExpenseModal
               mode={modalMode}
               onClose={() => setModalMode(null)}
               onSave={handleSaveTransaction}
               transactionToEdit={transactionToEdit}
-              categories={categories}
-              incomeCategories={incomeCategories}
-              transferCategories={[]} // Pass empty array
-              onAddCategory={handleAddCategory}
-              onAddIncomeCategory={handleAddIncomeCategory}
-              onAddTransferCategory={() => {}} // Pass empty function
+              categories={transactionType === 'income' ? incomeCategories : categories}
+              onAddCategory={transactionType === 'income' ? handleAddIncomeCategory : handleAddCategory}
+              // The props below are now redundant but we clear them for safety
+              incomeCategories={[]}
+              transferCategories={[]} 
+              onAddIncomeCategory={() => {}}
+              onAddTransferCategory={() => {}}
               transactionType={transactionType}
               accounts={accounts}
               contacts={contacts}
               userName={userName}
           />
       )}
+      {/* --- FIX END --- */}
     </div>
   );
 };
