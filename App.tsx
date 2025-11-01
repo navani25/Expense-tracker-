@@ -9,7 +9,6 @@ import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactio
 import AddExpenseModal from './components/AddExpenseModal';
 import ExpenseCategories from './components/ExpenseCategories';
 import IncomeCategories from './components/IncomeCategories';
-// import TransferCategories from './components/TransferCategories'; // Removed
 import CurrencySettings from './components/CurrencySettings';
 import LanguageSettings from './components/LanguageSettings';
 import Contacts from './components/Contacts';
@@ -39,7 +38,6 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 if (!Capacitor.isNativePlatform()) {
   GoogleAuth.initialize({
-    // This is the Client ID for the web application
     clientId: '381448198833-grkepoai0bqbtj2ntofc67hb4tqhd6ln.apps.googleusercontent.com',
     scopes: ['profile', 'email'],
     grantOfflineAccess: true,
@@ -55,13 +53,12 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
-  const [transfers, setTransfers] = useState<Transfer[]>([]); // Keep for data integrity, but remove UI
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
-  // const [transferCategories, setTransferCategories] = useState<Category[]>(TRANSFER_CATEGORIES); // Removed
   
   const [modalMode, setModalMode] = useState<'manual' | 'voice' | 'receipt' | null>(null);
-  const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense'); // Removed 'transfer'
+  const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [transactionToEdit, setTransactionToEdit] = useState<Expense | Income | Transfer | null>(null);
 
   const [isUserSignedIn, setIsUserSignedIn] = useState(false);
@@ -183,7 +180,6 @@ const App: React.FC = () => {
   const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
     if ('vendor' in transaction) setTransactionType('expense');
     else if ('source' in transaction) setTransactionType('income');
-    // Removed transfer logic
     setTransactionToEdit(transaction);
     setModalMode('manual');
   }, []);
@@ -202,7 +198,6 @@ const App: React.FC = () => {
     });
   }, [userId, loadAllDataFromDB]);
   
-  // --- THIS IS THE DEFINITIVE FIX FOR THE SAVING BUG ---
   const handleSaveTransaction = useCallback(async (data: AnyTransactionFormData | AnyTransactionFormData[]) => {
       if (!userId) {
           alert("You must be signed in to save a transaction.");
@@ -216,31 +211,24 @@ const App: React.FC = () => {
               return;
           }
 
-          // --- FIX: Trust the transactionType from the modal (AI or manual) ---
           let type = item.transactionType;
           if (!type) {
-              // Fallback logic, though this shouldn't be hit with the modal fix
-              if ('fromAccount' in item && 'toAccount' in item) {
-                  type = 'transfer';
-              } else if ('source' in item) {
-                  type = 'income';
-              } else {
-                  type = 'expense';
-              }
+              if ('fromAccount' in item && 'toAccount' in item) type = 'transfer';
+              else if ('source' in item) type = 'income';
+              else type = 'expense';
           }
           
-          // --- User request: Do not save transfers from this flow ---
           if (type === 'transfer') {
               console.warn("Skipping transfer transaction:", item);
-              return; // Simply don't save it
+              return;
           }
 
           const transactionData = { ...item, transactionType: type, amount };
           
           try {
-              if (item.id) { // Check if it's an edit
+              if (item.id) {
                   await api.updateTransaction(item.id, transactionData, userId);
-              } else { // It's a new transaction
+              } else {
                   await api.addTransaction(transactionData, userId);
                   if (Notification.permission === 'granted') {
                     const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
@@ -262,7 +250,7 @@ const App: React.FC = () => {
       await loadAllDataFromDB();
       setModalMode(null);
       setTransactionToEdit(null);
-  }, [userId, loadAllDataFromDB, currency]); // Removed `transactionType` as a dependency
+  }, [userId, loadAllDataFromDB, currency]);
 
   const handleAddCategory = async (newCategoryName: string) => { try { await api.addExpenseCategory(newCategoryName); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); } };
   const handleDeleteCategory = async (categoryToDelete: string) => {
@@ -288,7 +276,6 @@ const App: React.FC = () => {
         }
     });
   };
-  // const handleAddTransferCategory = (newCategory: string) => { if (!transferCategories.find(c => c.name.toLowerCase() === newCategory.toLowerCase())) { setTransferCategories(prev => [...prev, { name: newCategory, icon: '🏷️' }]); } }; // Removed
   const handleAddContact = (contact: ContactFormData) => { const newContact: Contact = { ...contact, id: `c_${Date.now()}`, avatarColor: ['bg-blue-500', 'bg-pink-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500'][Math.floor(Math.random() * 5)] }; setContacts(prev => [newContact, ...prev]); };
   const handleUpdateContact = (updatedContact: Contact) => setContacts(prev => prev.map(c => c.id === updatedContact.id ? updatedContact : c));
   const handleDeleteContact = (contactId: string) => {
@@ -321,7 +308,6 @@ const App: React.FC = () => {
       case Page.PROFILE_SETTINGS: return <ProfileSettings setActivePage={setActivePage} currentName={userName} currentEmail={userEmail} onSave={handleSaveProfile} />;
       case Page.EXPENSE_CATEGORIES: return <ExpenseCategories setActivePage={setActivePage} categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />;
       case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteIncomeCategory} />;
-      // case Page.TRANSFER_CATEGORIES: return <TransferCategories setActivePage={setActivePage} categories={transferCategories.map(c => c.name)} onAddCategory={handleAddTransferCategory} />; // Removed
       case Page.CURRENCY_SETTINGS: return <CurrencySettings setActivePage={setActivePage} selectedCurrency={currency} setSelectedCurrency={setCurrency} />;
       case Page.LANGUAGE_SETTINGS: return <LanguageSettings setActivePage={setActivePage} />;
       case Page.CONTACTS: return <Contacts setActivePage={setActivePage} contacts={contacts} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} onDeleteContact={handleDeleteContact} />;
@@ -338,6 +324,30 @@ const App: React.FC = () => {
   };
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={handleGetStarted} />;
+
+  // --- FIX START ---
+  // This logic is now placed outside the JSX return for clarity and reliability.
+  const getModalProps = () => {
+    let props;
+    if (transactionToEdit) {
+      // EDIT MODE: Determine categories directly from the item being edited.
+      const isIncome = 'source' in transactionToEdit;
+      props = {
+        categories: isIncome ? incomeCategories : categories,
+        onAddCategory: isIncome ? handleAddIncomeCategory : handleAddCategory,
+        transactionType: isIncome ? 'income' : 'expense'
+      };
+    } else {
+      // ADD NEW MODE: Determine categories from the active transactionType state.
+      props = {
+        categories: transactionType === 'income' ? incomeCategories : categories,
+        onAddCategory: transactionType === 'income' ? handleAddIncomeCategory : handleAddCategory,
+        transactionType: transactionType
+      };
+    }
+    return props;
+  };
+  // --- FIX END ---
   
   return (
     <div className="h-screen w-full bg-gray-50 dark:bg-gray-900 font-sans">
@@ -371,34 +381,19 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* --- FIX START --- */}
-      {/*
-        The logic here is to pass only one list of categories to the modal.
-        We check the `transactionType` state:
-        - If it's 'income', we pass the `incomeCategories` list and the function to add a new income category.
-        - Otherwise, we default to passing the standard `categories` (for expenses) and the function to add an expense category.
-        This ensures the modal always shows the correct list without needing its own internal logic.
-      */}
+      {/* --- FIX: The modal now gets its props from the logic block above --- */}
       {modalMode && (
           <AddExpenseModal
               mode={modalMode}
               onClose={() => setModalMode(null)}
               onSave={handleSaveTransaction}
               transactionToEdit={transactionToEdit}
-              categories={transactionType === 'income' ? incomeCategories : categories}
-              onAddCategory={transactionType === 'income' ? handleAddIncomeCategory : handleAddCategory}
-              // The props below are now redundant but we clear them for safety
-              incomeCategories={[]}
-              transferCategories={[]} 
-              onAddIncomeCategory={() => {}}
-              onAddTransferCategory={() => {}}
-              transactionType={transactionType}
+              {...getModalProps()} // Spread the correctly determined props
               accounts={accounts}
               contacts={contacts}
               userName={userName}
           />
       )}
-      {/* --- FIX END --- */}
     </div>
   );
 };
