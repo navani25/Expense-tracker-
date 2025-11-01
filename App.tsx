@@ -5,7 +5,7 @@ import History from './components/History';
 import Reports from './components/Reports';
 import Settings from './components/Settings';
 import BottomNav from './components/BottomNav';
-import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, ExpenseFormData, IncomeFormData, TransferFormData, LoginProvider, ContactFormData } from './types';
+import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, LoginProvider, ContactFormData } from './types';
 import AddExpenseModal from './components/AddExpenseModal';
 import ExpenseCategories from './components/ExpenseCategories';
 import IncomeCategories from './components/IncomeCategories';
@@ -57,8 +57,13 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   
-  const [modalMode, setModalMode] = useState<'manual' | 'voice' | 'receipt' | null>(null);
-  const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
+  // --- FIX START: Combine modal state to prevent timing issues ---
+  const [modalState, setModalState] = useState<{
+    mode: 'manual' | 'voice' | 'receipt' | null;
+    type: 'expense' | 'income';
+  }>({ mode: null, type: 'expense' });
+  // --- FIX END ---
+
   const [transactionToEdit, setTransactionToEdit] = useState<Expense | Income | Transfer | null>(null);
 
   const [isUserSignedIn, setIsUserSignedIn] = useState(false);
@@ -164,11 +169,11 @@ const App: React.FC = () => {
     setUserName(fullName);
   };
 
+  // --- FIX: Use the combined modal state for reliability ---
   const handleOpenModal = useCallback((mode: 'manual' | 'voice' | 'receipt', type: 'expense' | 'income' = 'expense') => {
     if(!isUserSignedIn){ setIsSignInPromptOpen(true); return; }
-    setTransactionType(type);
     setTransactionToEdit(null);
-    setModalMode(mode);
+    setModalState({ mode, type });
   }, [isUserSignedIn]);
 
   const handleLogout = useCallback(() => {
@@ -177,11 +182,11 @@ const App: React.FC = () => {
     setActivePage(Page.DASHBOARD);
   }, []);
   
+  // --- FIX: Use the combined modal state for reliability ---
   const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
-    if ('vendor' in transaction) setTransactionType('expense');
-    else if ('source' in transaction) setTransactionType('income');
+    const type = 'source' in transaction ? 'income' : 'expense';
     setTransactionToEdit(transaction);
-    setModalMode('manual');
+    setModalState({ mode: 'manual', type });
   }, []);
   
   const handleDeleteTransaction = useCallback(async (id: string | number) => {
@@ -192,7 +197,7 @@ const App: React.FC = () => {
         title: "Delete Transaction",
         message: "Are you sure you want to permanently delete this transaction?",
         onConfirm: async () => {
-            try { await api.deleteTransaction(id, userId); await loadAllDataFromDB(); } catch (error) { console.error("Failed to delete transaction:", error); alert("Could not delete the transaction."); }
+            try { await api.deleteTransaction(id, userId); await loadAllDataFromDB(); } catch (error) { console.error("Failed to delete transaction:", error); alert("Could not delete transaction."); }
             setConfirmation(null);
         }
     });
@@ -213,8 +218,7 @@ const App: React.FC = () => {
 
           let type = item.transactionType;
           if (!type) {
-              if ('fromAccount' in item && 'toAccount' in item) type = 'transfer';
-              else if ('source' in item) type = 'income';
+              if ('source' in item) type = 'income';
               else type = 'expense';
           }
           
@@ -232,12 +236,12 @@ const App: React.FC = () => {
                   await api.addTransaction(transactionData, userId);
                   if (Notification.permission === 'granted') {
                     const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
-                    new Notification("Transaction Saved", { body: `Successfully saved a new ${type} of ${currencySymbol}${amount.toFixed(2)}.`, });
+                    new Notification("Transaction Saved", { body: `Saved a new ${type} of ${currencySymbol}${amount.toFixed(2)}.`, });
                   }
               }
           } catch (error) {
               console.error("Failed to save transaction:", error);
-              alert("Could not save the transaction.");
+              alert("Could not save transaction.");
           }
       };
 
@@ -248,7 +252,7 @@ const App: React.FC = () => {
       }
       
       await loadAllDataFromDB();
-      setModalMode(null);
+      setModalState({ mode: null, type: 'expense' }); // Close modal
       setTransactionToEdit(null);
   }, [userId, loadAllDataFromDB, currency]);
 
@@ -302,7 +306,7 @@ const App: React.FC = () => {
       case Page.LOGIN: return <Login onLogin={handleLogin} provider={loginProvider} setActivePage={setActivePage} />;
       case Page.SIGNUP: return <Signup onSignup={() => handleLogin()} setActivePage={setActivePage} />;
       case Page.SUPPORT: return <Support setActivePage={setActivePage} userName={userName} income={income} expenses={expenses} />;
-       case Page.FORGOT_EMAIL: return <ForgotEmail setActivePage={setActivePage} />;
+      case Page.FORGOT_EMAIL: return <ForgotEmail setActivePage={setActivePage} />;
       case Page.CREATE_ACCOUNT: return <CreateAccount onSignup={handleLogin} setActivePage={setActivePage} />;
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
       case Page.PROFILE_SETTINGS: return <ProfileSettings setActivePage={setActivePage} currentName={userName} currentEmail={userEmail} onSave={handleSaveProfile} />;
@@ -324,30 +328,6 @@ const App: React.FC = () => {
   };
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={handleGetStarted} />;
-
-  // --- FIX START ---
-  // This logic is now placed outside the JSX return for clarity and reliability.
-  const getModalProps = () => {
-    let props;
-    if (transactionToEdit) {
-      // EDIT MODE: Determine categories directly from the item being edited.
-      const isIncome = 'source' in transactionToEdit;
-      props = {
-        categories: isIncome ? incomeCategories : categories,
-        onAddCategory: isIncome ? handleAddIncomeCategory : handleAddCategory,
-        transactionType: isIncome ? 'income' : 'expense'
-      };
-    } else {
-      // ADD NEW MODE: Determine categories from the active transactionType state.
-      props = {
-        categories: transactionType === 'income' ? incomeCategories : categories,
-        onAddCategory: transactionType === 'income' ? handleAddIncomeCategory : handleAddCategory,
-        transactionType: transactionType
-      };
-    }
-    return props;
-  };
-  // --- FIX END ---
   
   return (
     <div className="h-screen w-full bg-gray-50 dark:bg-gray-900 font-sans">
@@ -381,14 +361,16 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* --- FIX: The modal now gets its props from the logic block above --- */}
-      {modalMode && (
+      {/* --- FIX: The modal's props are now derived from the reliable combined state --- */}
+      {modalState.mode && (
           <AddExpenseModal
-              mode={modalMode}
-              onClose={() => setModalMode(null)}
+              mode={modalState.mode}
+              onClose={() => setModalState({ mode: null, type: 'expense' })}
               onSave={handleSaveTransaction}
               transactionToEdit={transactionToEdit}
-              {...getModalProps()} // Spread the correctly determined props
+              categories={modalState.type === 'income' ? incomeCategories : categories}
+              onAddCategory={modalState.type === 'income' ? handleAddIncomeCategory : handleAddCategory}
+              transactionType={modalState.type}
               accounts={accounts}
               contacts={contacts}
               userName={userName}
