@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Page } from '../types';
-import type { Expense, Income, Transfer } from '../types';
+import type { Expense, Income, Transfer, Category } from '../types';
 import Header from './common/Header';
 import { CURRENCIES } from '../constants';
 
@@ -49,11 +49,11 @@ const EmptyState: React.FC<{
 
 // --- THIS IS THE CORRECTED LIST ITEM SECTION ---
 
-const ExpenseListItem: React.FC<{ expense: Expense; currencySymbol: string; onEdit: (item: any) => void; onDelete: (id: any) => void; }> = ({ expense, currencySymbol, onEdit, onDelete }) => (
+const ExpenseListItem: React.FC<{ expense: Expense; currencySymbol: string; onEdit: (item: any) => void; onDelete: (id: any) => void; icon: string; }> = ({ expense, currencySymbol, onEdit, onDelete, icon }) => (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center space-x-4 min-w-0">
-            <div className={`w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-xl font-bold text-red-600 dark:text-red-300`}>
-                {expense.category ? expense.category.charAt(0) : '?'}
+            <div className={`w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center text-2xl`}>
+                {icon}
             </div>
             <div className="min-w-0">
                 <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{expense.vendor || expense.notes}</p>
@@ -75,11 +75,11 @@ const ExpenseListItem: React.FC<{ expense: Expense; currencySymbol: string; onEd
     </div>
 );
 
-const IncomeListItem: React.FC<{ income: Income; currencySymbol: string; onEdit: (item: any) => void; onDelete: (id: any) => void; }> = ({ income, currencySymbol, onEdit, onDelete }) => (
+const IncomeListItem: React.FC<{ income: Income; currencySymbol: string; onEdit: (item: any) => void; onDelete: (id: any) => void; icon: string; }> = ({ income, currencySymbol, onEdit, onDelete, icon }) => (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center space-x-4 min-w-0">
-            <div className={`w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center text-xl font-bold text-green-600 dark:text-green-300`}>
-                {income.category ? income.category.charAt(0) : '?'}
+            <div className={`w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center text-2xl`}>
+                {icon}
             </div>
             <div className="min-w-0">
                 <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">{income.source || income.notes}</p>
@@ -138,14 +138,19 @@ interface HistoryProps {
     onAdd: (type: 'expense' | 'income') => void; // Removed 'transfer'
     setActivePage: (page: Page) => void;
     currency: string;
+    categories: Category[];
+    incomeCategories: Category[];
 }
 
-const History: React.FC<HistoryProps> = ({ expenses, income, transfers, onEditTransaction, onDeleteTransaction, onAdd, setActivePage, currency }) => {
+const History: React.FC<HistoryProps> = ({ expenses, income, transfers, onEditTransaction, onDeleteTransaction, onAdd, setActivePage, currency, categories, incomeCategories }) => {
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense'); // Removed 'transfer'
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   const minSwipeDistance = 50;
+
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.name, c.icon])), [categories]);
+  const incomeCategoryMap = useMemo(() => new Map(incomeCategories.map(c => [c.name, c.icon])), [incomeCategories]);
 
   const onTouchStart = (e: React.TouchEvent) => { setTouchEndX(null); setTouchStartX(e.targetTouches[0].clientX); };
   const onTouchMove = (e: React.TouchEvent) => { setTouchEndX(e.targetTouches[0].clientX); };
@@ -169,8 +174,8 @@ const History: React.FC<HistoryProps> = ({ expenses, income, transfers, onEditTr
   // --- FIX: Simplified transform logic ---
   const getTransformX = () => { if (activeTab === 'income') return '-100%'; return '0%'; };
 
-  const ExpensesView = ( <div className="h-full overflow-y-auto"> {expenses.length > 0 ? ( Object.keys(groupedExpenses).map((month) => ( <div key={month} className="mb-6"> <h2 className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 sticky top-0 z-[1]">{month}</h2> <div> {groupedExpenses[month].map(expense => <ExpenseListItem key={expense.id} expense={expense} onEdit={onEditTransaction} onDelete={onDeleteTransaction} currencySymbol={currencySymbol} />)} </div> </div> )) ) : ( <EmptyState type="expense" onActionClick={() => onAdd('expense')} /> )} </div> );
-  const IncomeView = ( <div className="h-full overflow-y-auto"> {income.length > 0 ? ( Object.keys(groupedIncomes).map((month) => ( <div key={month} className="mb-6"> <h2 className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 sticky top-0 z-[1]">{month}</h2> <div> {groupedIncomes[month].map(incomeItem => <IncomeListItem key={incomeItem.id} income={incomeItem} currencySymbol={currencySymbol} onEdit={onEditTransaction} onDelete={onDeleteTransaction} />)} </div> </div> )) ) : ( <EmptyState type="income" onActionClick={() => onAdd('income')} /> )} </div> );
+  const ExpensesView = ( <div className="h-full overflow-y-auto"> {expenses.length > 0 ? ( Object.keys(groupedExpenses).map((month) => ( <div key={month} className="mb-6"> <h2 className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 sticky top-0 z-[1]">{month}</h2> <div> {groupedExpenses[month].map(expense => { const icon = categoryMap.get(expense.category) || '🏷️'; return <ExpenseListItem key={expense.id} expense={expense} onEdit={onEditTransaction} onDelete={onDeleteTransaction} currencySymbol={currencySymbol} icon={icon} />; })} </div> </div> )) ) : ( <EmptyState type="expense" onActionClick={() => onAdd('expense')} /> )} </div> );
+  const IncomeView = ( <div className="h-full overflow-y-auto"> {income.length > 0 ? ( Object.keys(groupedIncomes).map((month) => ( <div key={month} className="mb-6"> <h2 className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 sticky top-0 z-[1]">{month}</h2> <div> {groupedIncomes[month].map(incomeItem => { const icon = incomeCategoryMap.get(incomeItem.category) || '💰'; return <IncomeListItem key={incomeItem.id} income={incomeItem} currencySymbol={currencySymbol} onEdit={onEditTransaction} onDelete={onDeleteTransaction} icon={icon} />; })} </div> </div> )) ) : ( <EmptyState type="income" onActionClick={() => onAdd('income')} /> )} </div> );
   // const TransfersView = ( ... ); // No longer needed
 
   // --- FIX: Simplified FAB logic ---
