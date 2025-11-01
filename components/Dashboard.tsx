@@ -12,6 +12,7 @@ interface DashboardProps {
   setActivePage: (page: Page) => void;
   currency: string;
   onEditExpense: (expense: Expense) => void;
+  onDeleteExpense: (id: string | number) => void;
 }
 
 const DashboardEmptyState: React.FC<{ openModal: (mode: 'manual') => void }> = ({ openModal }) => (
@@ -52,7 +53,12 @@ const QuickActionButton: React.FC<{
   </button>
 );
 
-const ExpenseItem: React.FC<{ expense: Expense; currencySymbol: string; onEdit: (expense: Expense) => void; }> = ({ expense, currencySymbol, onEdit }) => {
+const ExpenseItem: React.FC<{ 
+    expense: Expense; 
+    currencySymbol: string; 
+    onEdit: (expense: Expense) => void; 
+    onDelete: (id: string | number) => void; 
+}> = ({ expense, currencySymbol, onEdit, onDelete }) => {
     return (
         <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl">
             <div className="flex items-center space-x-4 min-w-0">
@@ -64,12 +70,15 @@ const ExpenseItem: React.FC<{ expense: Expense; currencySymbol: string; onEdit: 
                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(expense.date.replace(/-/g, '\/')).toLocaleDateString()}</p>
                 </div>
             </div>
-            <div className="flex items-center space-x-2 flex-shrink-0">
+            <div className="flex items-center space-x-1 flex-shrink-0">
                 <p className="font-bold text-lg text-red-500 dark:text-red-400">
                     -{currencySymbol}{expense.amount.toFixed(2)}
                 </p>
                 <button onClick={() => onEdit(expense)} className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-full focus:outline-none" aria-label="Edit expense">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                </button>
+                <button onClick={() => onDelete(expense.id)} className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full focus:outline-none" aria-label="Delete expense">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
             </div>
         </div>
@@ -77,7 +86,7 @@ const ExpenseItem: React.FC<{ expense: Expense; currencySymbol: string; onEdit: 
 };
 
 
-const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, userName, setActivePage, currency, onEditExpense }) => {
+const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, userName, setActivePage, currency, onEditExpense, onDeleteExpense }) => {
   const { t } = useTranslation();
   
   const currentDate = new Date();
@@ -166,7 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({ openModal, expenses, income, user
                 <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('recent_expenses')}</h2>
                 <div className="space-y-3">
                   {recentExpenses.map(expense => (
-                    <ExpenseItem key={expense.id} expense={expense} currencySymbol={currencySymbol} onEdit={onEditExpense} />
+                    <ExpenseItem key={expense.id} expense={expense} currencySymbol={currencySymbol} onEdit={onEditExpense} onDelete={onDeleteExpense} />
                   ))}
                 </div>
                 {expenses.length > 10 && (

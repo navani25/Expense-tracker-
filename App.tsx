@@ -5,6 +5,7 @@ import History from './components/History';
 import Reports from './components/Reports';
 import Settings from './components/Settings';
 import BottomNav from './components/BottomNav';
+import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, ExpenseFormData, IncomeFormData, TransferFormData, LoginProvider, ContactFormData } from './types';
 import AddExpenseModal from './components/AddExpenseModal';
 import ExpenseCategories from './components/ExpenseCategories';
 import IncomeCategories from './components/IncomeCategories';
@@ -15,7 +16,6 @@ import Contacts from './components/Contacts';
 import Legal from './components/Legal';
 import Login from './components/Login';
 import Signup from './components/Signup';
-import { Page, Expense, Income, Contact, Bank, Transfer, Category, AnyTransactionFormData, ExpenseFormData, IncomeFormData, TransferFormData, LoginProvider, ContactFormData } from './types';
 import { CURRENCIES, BANKS, INITIAL_ACCOUNTS, api, INITIAL_GUEST_EXPENSE_CATEGORIES, INITIAL_GUEST_INCOME_CATEGORIES } from './constants';
 import { useDarkMode } from './hooks/useDarkMode';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -308,7 +308,7 @@ const App: React.FC = () => {
     if (isLoading) { return <LoadingSpinner />; }
     const currentUserName = isUserSignedIn ? userName : "Welcome";
     switch (activePage) {
-      case Page.DASHBOARD: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      case Page.DASHBOARD: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} onDeleteExpense={handleDeleteTransaction} />;
       case Page.HISTORY: return <History expenses={expenses} income={income} transfers={transfers} onEditTransaction={handleEditTransaction} onDeleteTransaction={handleDeleteTransaction} onAdd={(type) => handleOpenModal('manual', type)} setActivePage={setActivePage} currency={currency} />;
       case Page.REPORTS: return <Reports expenses={expenses} isDarkMode={isDarkMode} isBankConnected={isBankConnected} setActivePage={setActivePage} setIsBankConnected={setIsBankConnected} currency={currency} />;
       case Page.SETTINGS: return <Settings isUserSignedIn={isUserSignedIn} onLogout={handleLogout} setActivePage={setActivePage} setLoginProvider={setLoginProvider} userName={userName} userEmail={userEmail} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} profilePhoto={profilePhoto} onGoogleLogin={handleLogin} />;
@@ -320,7 +320,7 @@ const App: React.FC = () => {
       case Page.FORGOT_PASSWORD: return <ForgotPassword setActivePage={setActivePage} />;
       case Page.PROFILE_SETTINGS: return <ProfileSettings setActivePage={setActivePage} currentName={userName} currentEmail={userEmail} onSave={handleSaveProfile} />;
       case Page.EXPENSE_CATEGORIES: return <ExpenseCategories setActivePage={setActivePage} categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />;
-      case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteCategory} />;
+      case Page.INCOME_CATEGORIES: return <IncomeCategories setActivePage={setActivePage} categories={incomeCategories} onAddCategory={handleAddIncomeCategory} onDeleteCategory={handleDeleteIncomeCategory} />;
       // case Page.TRANSFER_CATEGORIES: return <TransferCategories setActivePage={setActivePage} categories={transferCategories.map(c => c.name)} onAddCategory={handleAddTransferCategory} />; // Removed
       case Page.CURRENCY_SETTINGS: return <CurrencySettings setActivePage={setActivePage} selectedCurrency={currency} setSelectedCurrency={setCurrency} />;
       case Page.LANGUAGE_SETTINGS: return <LanguageSettings setActivePage={setActivePage} />;
@@ -333,7 +333,7 @@ const App: React.FC = () => {
       case Page.LINK_ACCOUNT: return <LinkAccount setActivePage={setActivePage} bank={selectedBank} onConnect={() => {setIsBankConnected(true); setActivePage(Page.REPORTS);}} />;
       case Page.PROFILE_PHOTO: return <ProfilePhoto setActivePage={setActivePage} currentPhoto={profilePhoto} onPhotoChange={setProfilePhoto} userName={userName} />;
       case Page.DEMO_REPORT: return <DemoReport setActivePage={setActivePage} isDarkMode={isDarkMode} />;
-      default: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} />;
+      default: return <Dashboard openModal={(mode) => handleOpenModal(mode, 'expense')} expenses={expenses} income={income} transfers={transfers} userName={currentUserName} setActivePage={setActivePage} currency={currency} onEditExpense={handleEditTransaction} onDeleteExpense={handleDeleteTransaction} />;
     }
   };
 
