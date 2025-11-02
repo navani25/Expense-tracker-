@@ -1,0 +1,29 @@
+digraph Architecture {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor="#f0f0f0", color="#333333"];
+
+  Frontend [label="Frontend\nReact + Vite\n(App.tsx, components/*)"];
+  WebOAuth [label="OAuth Web Client\n(@react-oauth/google)"];
+  NativeAuth [label="GoogleAuth Native Plugin\n@codetrix-studio/capacitor-google-auth"];
+  Capacitor [label="Capacitor Bridge"];
+  AndroidApp [label="Android app\n(com.ledgerly.app)"];
+  Plugins [label="Android Plugins\nCamera, Google Play Services"];
+  Assets [label="assets/www (dist)"];
+  ApiClient [label="API client\n(constants.ts / api)"];
+  Backend [label="Backend\nExpress (backend/server.js)"];
+  DB [label="SQLite DB\n(databases/)"];
+  GoogleCloud [label="Google Cloud / Firebase\nOAuth clients + google-services.json"];
+
+  Frontend -> WebOAuth [label="uses (web)"];
+  Frontend -> NativeAuth [label="invokes (native on device)"];
+  Frontend -> ApiClient [label="calls"];
+  NativeAuth -> Capacitor;
+  Capacitor -> AndroidApp;
+  AndroidApp -> Plugins;
+  AndroidApp -> Assets;
+  ApiClient -> Backend;
+  Backend -> DB;
+  WebOAuth -> GoogleCloud;
+  NativeAuth -> GoogleCloud [label="Android OAuth client (package+SHA-1)"];
+  GoogleCloud -> Backend [label="google-services.json / Auth config", style=dashed];
+}

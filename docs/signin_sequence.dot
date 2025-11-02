@@ -1,0 +1,21 @@
+digraph SignInSequence {
+  rankdir=LR;
+  node [shape=box, style=rounded, color="#333333"];
+
+  User [label="User\n(UI)"];
+  App [label="Web App\n(React)"];
+  Capacitor [label="Capacitor\nBridge"];
+  Plugin [label="GoogleAuth\nPlugin"];
+  Android [label="Android / Google Play Services"];
+  Google [label="Google OAuth / Firebase"];
+
+  User -> App [label="1. Click 'Sign in with Google'"];
+  App -> Capacitor [label="2. call GoogleAuth.signIn()"];
+  Capacitor -> Plugin [label="3. forward request"];
+  Plugin -> Android [label="4. start SignIn activity (SignInHubActivity)"];
+  Android -> Google [label="5. request auth UI / token"];
+  Google -> Android [label="6. return auth result or error"];
+  Android -> Plugin [label="7. onActivityResult -> token / error"];
+  Plugin -> Capacitor [label="8. return result"];
+  Capacitor -> App [label="9. success or error (codes: 12500, 10)"];
+}

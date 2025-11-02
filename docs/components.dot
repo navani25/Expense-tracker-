@@ -1,0 +1,41 @@
+digraph Components {
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor="#ffffff", color="#333333"];
+
+  App [label="App.tsx"];
+  Dashboard [label="components/Dashboard"];
+  History [label="components/History"];
+  Reports [label="components/Reports"];
+  Settings [label="components/Settings"];
+  Login [label="components/Login"];
+  Signup [label="components/Signup"];
+  BottomNav [label="components/BottomNav"];
+  Sidebar [label="components/Sidebar"];
+  AddExpenseModal [label="components/AddExpenseModal"];
+  SignInPrompt [label="components/SignInPromptModal"];
+  ApiClient [label="api client (constants.ts)"];
+  Backend [label="backend/server.js"];
+  DB [label="databases (SQLite)"];
+  Plugins [label="Capacitor plugins"];
+  Camera [label="@capacitor/camera"];
+  GoogleAuth [label="@codetrix-studio/capacitor-google-auth"];
+
+  App -> Dashboard;
+  App -> History;
+  App -> Reports;
+  App -> Settings;
+  App -> Login;
+  App -> Signup;
+  App -> BottomNav;
+  App -> Sidebar;
+  App -> AddExpenseModal;
+  App -> SignInPrompt;
+
+  App -> ApiClient;
+  ApiClient -> Backend;
+  Backend -> DB;
+
+  App -> GoogleAuth [label="invoke native auth"];
+  Plugins -> Camera;
+  Plugins -> GoogleAuth;
+}
