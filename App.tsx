@@ -179,9 +179,11 @@ const App: React.FC = () => {
     setActivePage(Page.DASHBOARD);
   }, []);
   
-  const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
-    // --- DEFINITIVE FIX: Reliably check if it's an Income. If not, it MUST be an Expense. ---
-    const type = 'source' in transaction ? 'income' : 'expense';
+const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
+    // The transaction object should have a `transactionType` property that reliably
+    // identifies it as 'income' or 'expense'. This is safer than checking for
+    // the existence of a 'source' key, which caused the bug.
+    const type = (transaction as any).transactionType === 'income' ? 'income' : 'expense';
     setTransactionToEdit(transaction);
     setModalState({ mode: 'manual', type });
   }, []);
