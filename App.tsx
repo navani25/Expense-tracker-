@@ -237,8 +237,10 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
 
   // This function uses the Google AI to generate a relevant emoji for a category name.
   const getEmojiForCategory = useCallback(async (categoryName: string): Promise<string> => {
+    // --- THIS IS THE NEW DIAGNOSTIC LINE ---
+    console.log("Checking for API Key:", process.env.REACT_APP_API_KEY ? "Found it!" : "Not found!");
+
     try {
-      // IMPORTANT: This checks for the API key in your .env file.
       if (!process.env.REACT_APP_API_KEY) {
         console.warn("API_KEY missing from .env file. Using fallback emoji.");
         return '🏷️';
@@ -253,15 +255,13 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
       });
       
       const emoji = (response as any).text || '🏷️';
-      // A safety check to make sure the AI returns a valid-looking emoji
       return emoji.trim().length > 4 ? '🏷️' : emoji.trim();
     } catch (error) {
       console.error("Error generating emoji:", error);
-      return '🏷️'; // Return a default emoji if there is any error
+      return '🏷️';
     }
   }, []);
 
-  // This function now gets an emoji before saving the new expense category.
   const handleAddCategory = async (newCategoryName: string) => {
     try {
       const emoji = await getEmojiForCategory(newCategoryName);
@@ -283,7 +283,6 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
     });
   };
 
-  // This function now gets an emoji before saving the new income category.
   const handleAddIncomeCategory = async (newCategoryName: string) => {
     try {
       const emoji = await getEmojiForCategory(newCategoryName);
