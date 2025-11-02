@@ -2,7 +2,7 @@ import type { Bank, BudgetData, Category } from './types';
 
 // --- THIS IS THE CRITICAL FIX ---
 // We now use 'localhost', which is the standard name for your own computer.
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://192.168.1.4:8000/api';
 
 export const INITIAL_GUEST_EXPENSE_CATEGORIES: Category[] = [
     { name: "Accommodation", icon: "🛏️" }, { name: "Entertainment", icon: "🎤" },
