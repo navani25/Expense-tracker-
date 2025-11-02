@@ -173,9 +173,8 @@ useEffect(() => {
         },
       };
       
-    // The system instruction is updated to specify that the input will be in English.
-      const systemInstruction = `You are an intelligent expense tracker assistant. Parse the user's English text into a JSON array of transactions following the schema. "Expense" means a cost, and "income" means earnings. Provide only JSON in the final output.`;
-
+      // description as the 'notes' field, which acts as the title.
+      const systemInstruction = `You are an intelligent expense tracker assistant. Parse the user's English text into a JSON array of transactions following the schema. The 'notes' field should be used for the transaction's title or description. For example, in "monthly salary of 5000", the notes would be "monthly salary". Provide only JSON in the final output.`;
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash', contents: text,
         config: { responseMimeType: 'application/json', responseSchema: schema, systemInstruction: systemInstruction }
