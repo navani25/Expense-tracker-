@@ -46,7 +46,7 @@ const SignIn: React.FC<SignInProps> = ({ setActivePage, onGoogleLogin, isDarkMod
         <div className="flex flex-col justify-center items-center h-full p-4 bg-white dark:bg-gray-900">
             <section className="text-center">
                 <div className="w-24 h-24 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 ring-4 ring-white dark:ring-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-400">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                     </svg>
                 </div>
@@ -60,10 +60,10 @@ const SignIn: React.FC<SignInProps> = ({ setActivePage, onGoogleLogin, isDarkMod
                 <GoogleLogin
                     onSuccess={handleSuccess}
                     onError={handleError}
-                    // --- THIS IS THE FIX: Disables the one-tap sign-in feature ---
-                    useOneTap={false}
+                    // --- THIS IS THE FIX: This explicitly disables the one-tap feature ---
+                    useOneTap={false} 
                     theme={isDarkMode ? 'filled_black' : 'outline'}
-                    shape="pill" 
+                    shape="pill"
                     width="320px"
                 />
             </section>
