@@ -1,0 +1,143 @@
+# Files Safe to Move to Archive/Delete Folder
+
+## Already Moved to Archive (archive_2025-11-02/)
+1. metadata.json
+   - Original Location: /metadata.json
+   - Reason: Not referenced anywhere in the codebase
+
+2. src/vite-env.d.ts
+   - Original Location: /src/vite-env.d.ts
+   - Reason: TypeScript declarations now handled by tsconfig.json
+
+3. components/TransferCategories.tsx
+   - Original Location: /components/TransferCategories.tsx
+   - Reason: Not used in main routing, no dynamic imports found
+
+4. components/DemoReport.tsx
+   - Original Location: /components/DemoReport.tsx
+   - Reason: Only used conditionally, demo functionality
+
+## Additional Files to Move to Archive
+
+### Frontend Components
+1. components/common/BackButton.tsx
+   - Reason: Duplicate implementation across multiple components
+   - Note: Should be consolidated into a single shared component
+
+2. components/SignInPromptModal.tsx
+   - Reason: Used only once in App.tsx, can be inlined
+   - Impact: Low, simple modal component
+
+### Backend/API Files
+1. backend/server.js unused endpoints:
+   - PUT /api/transaction/:id (update endpoint)
+   - DELETE /api/income-category/:name
+   Reason: Frontend uses alternative endpoints
+
+### Configuration Files
+1. .env.local
+   - Reason: Sample file, should be renamed to .env.example
+   - Note: Contains sensitive keys that should not be in source control
+
+### Type Definitions
+1. In types.ts:
+   - CategoryBudget interface
+   - BudgetData interface
+   Reason: Only used in type definitions, no runtime usage
+
+### Constants
+1. In constants.ts:
+   - INITIAL_GUEST_EXPENSE_CATEGORIES
+   - INITIAL_GUEST_INCOME_CATEGORIES
+   Reason: Duplicated in backend/database.js
+
+## Do Not Delete (Required Files)
+1. All capacitor-related files:
+   - capacitor.config.ts
+   - android/gradle files
+   - android/app/build.gradle
+   Reason: Required for Android build
+
+2. All language files:
+   - translations.ts
+   - LanguageProvider.tsx
+   Reason: Critical for i18n
+
+3. Core configuration:
+   - tsconfig.json
+   - vite.config.ts
+   - package.json
+   Reason: Build system requirements
+
+## Next Actions
+1. Unused Component Features:
+   - components/SignInPromptModal.tsx
+     - Only used once, could be inlined into parent
+   - components/common/BackButton.tsx
+     - Duplicates browser back functionality in some places
+
+2. Duplicate/Obsolete Constants:
+   - constants.ts: INITIAL_GUEST_EXPENSE_CATEGORIES
+     - Duplicated in database.js initial setup
+   - types.ts: Unused interfaces
+     - CategoryBudget (never implemented)
+     - BudgetData (only in type definitions)
+
+3. Unused API Endpoints:
+   - backend/server.js: Several endpoints have no frontend usage:
+     - PUT /api/transaction/:id (update uses POST instead)
+     - DELETE /api/income-category/:name (no UI for deletion)
+
+## Files to Keep Despite Low Usage
+1. All language-related files (translations.ts, LanguageProvider.tsx)
+   - Critical for i18n support
+2. All authentication components
+   - Required for proper auth flow
+3. All type definitions in types.ts
+   - Provides TypeScript safety
+4. All hooks in hooks/ directory
+   - Used throughout components
+
+## Next Steps
+1. Verify no imports of archived components remain
+2. Update any type references that used moved interfaces
+3. Consider consolidating similar components:
+   - IncomeCategories + ExpenseCategories → TransactionCategories
+   - Various modal components → unified Modal system
+
+## Duplicate/Obsolete Files
+1. android/app/capacitor.build.gradle
+   - Location: /android/app/capacitor.build.gradle
+   - Reason: Capacitor uses capacitor.config.ts at root level now
+
+## Development Artifacts
+1. All files in android/app/build/
+   - Location: /android/app/build/*
+   - Reason: These are build artifacts that should not be in source control
+
+## Proposed Actions:
+1. Create directory: /archive_[DATE]
+2. Move listed files there instead of direct deletion
+3. After testing that nothing breaks, these files can be safely deleted
+
+## Command to create archive folder and move files (PowerShell):
+```powershell
+$date = Get-Date -Format "yyyy-MM-dd"
+$archiveDir = "archive_$date"
+New-Item -ItemType Directory -Path $archiveDir
+Move-Item metadata.json $archiveDir/
+Move-Item src/vite-env.d.ts $archiveDir/src/
+# Note: Don't move android/app/build/ - instead add it to .gitignore
+```
+
+## Additional Notes:
+- Before deleting any files, ensure:
+  1. All tests pass
+  2. App builds successfully
+  3. Android native features work
+  4. Make a backup/commit of current state
+
+## Files to Keep (even though rarely used):
+1. capacitor.config.ts - Required for Android builds
+2. android/gradle* files - Required for Android builds
+3. All component files - Currently used in routing

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Page } from '../types';
 import Header from './common/Header';
-import BackButton from './common/BackButton';
+import BackButton from '../../components/common/BackButton';
 
 interface TransferCategoriesProps {
   setActivePage: (page: Page) => void;

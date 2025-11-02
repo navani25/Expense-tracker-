@@ -31,7 +31,7 @@ import ForgotEmail from './components/ForgotEmail';
 import CreateAccount from './components/CreateAccount';
 import ForgotPassword from './components/ForgotPassword';
 import Licenses from './components/Licenses';
-import SignInPromptModal from './components/SignInPromptModal';
+import SignInPromptModal from './archive_2025-11-02/components/SignInPromptModal';
 import DemoReport from './components/DemoReport';
 import ConfirmationModal from './components/ConfirmationModal';
 import { Capacitor } from '@capacitor/core';
