@@ -173,8 +173,8 @@ useEffect(() => {
         },
       };
       
-      // This new prompt explicitly tells the AI to handle both English and Tamil.
-      const systemInstruction = `You are an intelligent expense tracker assistant. Parse the user's text, which can be in English or Tamil, into a JSON array of transactions following the schema. For Tamil, "செலவு" means expense and "வருமானம்" means income. Provide only JSON in the final output.`;
+    // The system instruction is updated to specify that the input will be in English.
+      const systemInstruction = `You are an intelligent expense tracker assistant. Parse the user's English text into a JSON array of transactions following the schema. "Expense" means a cost, and "income" means earnings. Provide only JSON in the final output.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash', contents: text,
@@ -206,11 +206,10 @@ useEffect(() => {
     if (view === 'voice' && !isEditing) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) { setStatusText("Speech recognition not supported."); return; }
-
-      const recognition = new SpeechRecognition();
+const recognition = new SpeechRecognition();
       recognition.continuous = false;
-      // This line correctly sets the language for speech-to-text.
-      recognition.lang = language === 'ta' ? 'ta-IN' : 'en-US'; 
+      // This line is changed to hardcode the language to English (en-US).
+      recognition.lang = 'en-US'; 
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
@@ -239,7 +238,8 @@ useEffect(() => {
             </div>
           </div>
           <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">{statusText}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">e.g., "ரூபாய் 500 செலவு செய்தது"</p>
+          {/* The example text is updated to an English phrase. */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">e.g., "Dinner for 20 dollars" or "Salary of 5000"</p>
         </div>
       );
     }
