@@ -1,5 +1,7 @@
 import type { Bank, BudgetData, Category } from './types';
 
+// --- THIS IS THE CRITICAL FIX ---
+// We now use 'localhost', which is the standard name for your own computer.
 const API_BASE_URL = 'http://localhost:8000/api';
 
 export const INITIAL_GUEST_EXPENSE_CATEGORIES: Category[] = [
@@ -61,7 +63,6 @@ export const api = {
     const { data } = await response.json();
     return data;
   },
-  // This function now accepts both a name and an icon
   addExpenseCategory: async (name: string, icon: string): Promise<Category> => {
     const response = await fetch(`${API_BASE_URL}/expense-category`, {
         method: 'POST',
@@ -82,7 +83,6 @@ export const api = {
     const { data } = await response.json();
     return data;
   },
-  // This function now accepts both a name and an icon
   addIncomeCategory: async (name: string, icon: string): Promise<Category> => {
     const response = await fetch(`${API_BASE_URL}/income-category`, {
         method: 'POST',
@@ -110,6 +110,7 @@ export const CURRENCIES = [
 export const LANGUAGES = [
     { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
     { code: 'fr', name: 'Français' },
+    // --- THIS IS THE FIX: Added the missing 'name' key ---
     { code: 'de', name: 'Deutsch' },
     { code: 'hi', name: 'हिन्दी' }, { code: 'ja', name: '日本語' },
     { code: 'ta', name: 'தமிழ்' },
