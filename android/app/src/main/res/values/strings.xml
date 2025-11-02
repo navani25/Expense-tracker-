@@ -4,4 +4,5 @@
     <string name="title_activity_main">Ledgerly</string>
     <string name="package_name">com.ledgerly.app</string>
     <string name="custom_url_scheme">com.ledgerly.app</string>
+    <string name="server_client_id">381448198833-aus47u3lbni203s1hcou0rpme6hvhbai.apps.googleusercontent.com</string>
 </resources>
