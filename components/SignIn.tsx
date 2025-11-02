@@ -60,10 +60,11 @@ const SignIn: React.FC<SignInProps> = ({ setActivePage, onGoogleLogin, isDarkMod
                 <GoogleLogin
                     onSuccess={handleSuccess}
                     onError={handleError}
-                    useOneTap // Enables the one-tap sign-in experience
+                    // --- THIS IS THE FIX: Disables the one-tap sign-in feature ---
+                    useOneTap={false}
                     theme={isDarkMode ? 'filled_black' : 'outline'}
-                    shape="pill" // Matches the original button's rounded style
-                    width="320px" // Ensure it fits the container
+                    shape="pill" 
+                    width="320px"
                 />
             </section>
             
