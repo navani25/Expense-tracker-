@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-// --- THIS IS THE FIX: Import the Google AI library ---
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from '@google/genai'; // Import the Google AI library
 import Welcome from './components/Welcome';
 import Dashboard from './components/Dashboard';
 import History from './components/History';
@@ -236,11 +235,12 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
       setTransactionToEdit(null);
   }, [userId, loadAllDataFromDB]);
 
-  // --- THIS IS THE FIX: A new function to generate an emoji using AI ---
+  // This function uses the Google AI to generate a relevant emoji for a category name.
   const getEmojiForCategory = useCallback(async (categoryName: string): Promise<string> => {
     try {
+      // IMPORTANT: This checks for the API key in your .env file.
       if (!process.env.REACT_APP_API_KEY) {
-        console.warn("API_KEY missing from .env. Using fallback emoji.");
+        console.warn("API_KEY missing from .env file. Using fallback emoji.");
         return '🏷️';
       }
       const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_API_KEY || '' });
@@ -253,15 +253,15 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
       });
       
       const emoji = (response as any).text || '🏷️';
-      // Fallback for unexpected AI responses
+      // A safety check to make sure the AI returns a valid-looking emoji
       return emoji.trim().length > 4 ? '🏷️' : emoji.trim();
     } catch (error) {
       console.error("Error generating emoji:", error);
-      return '🏷️'; // Return a default emoji on error
+      return '🏷️'; // Return a default emoji if there is any error
     }
   }, []);
 
-  // --- THIS IS THE FIX: Updated to generate an emoji before saving ---
+  // This function now gets an emoji before saving the new expense category.
   const handleAddCategory = async (newCategoryName: string) => {
     try {
       const emoji = await getEmojiForCategory(newCategoryName);
@@ -283,7 +283,7 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
     });
   };
 
-  // --- THIS IS THE FIX: Updated to generate an emoji before saving ---
+  // This function now gets an emoji before saving the new income category.
   const handleAddIncomeCategory = async (newCategoryName: string) => {
     try {
       const emoji = await getEmojiForCategory(newCategoryName);
@@ -385,7 +385,7 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
               expenseCategories={categories}
               incomeCategories={incomeCategories}
               onAddExpenseCategory={handleAddCategory}
-              onAddIncomeCategory={handleAddIncomeCategory}
+              onAddIncome-category={handleAddIncomeCategory}
               transactionType={modalState.type}
               accounts={accounts}
               contacts={contacts}
