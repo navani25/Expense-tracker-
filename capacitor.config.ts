@@ -1,9 +1,12 @@
+// In capacitor.config.ts
+
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.Ledgerly.app', // <-- Your unique app ID
-  appName: 'Ledgerly',       // <-- Your app's name
-  webDir: 'dist',            // <-- The folder where your web app is built (Vite uses 'dist')
+  // --- THIS IS THE FIX ---
+  appId: 'com.ledgerly.app', // Change 'Ledgerly' to 'ledgerly'
+  appName: 'Ledgerly',
+  webDir: 'dist',
   server: {
     androidScheme: 'https'
   }

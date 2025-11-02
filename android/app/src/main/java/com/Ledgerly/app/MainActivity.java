@@ -1,4 +1,4 @@
-package com.Ledgerly.app;
+package com.ledgerly.app;
 
 import com.getcapacitor.BridgeActivity;
 
