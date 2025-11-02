@@ -63,8 +63,12 @@ export const api = {
     const { data } = await response.json();
     return data;
   },
-  addExpenseCategory: async (newCategoryName: string): Promise<Category> => {
-    const response = await fetch(`${API_BASE_URL}/expense-category`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newCategoryName }), });
+  addExpenseCategory: async (name: string, icon: string): Promise<Category> => {
+    const response = await fetch(`${API_BASE_URL}/expense-category`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, icon }),
+    });
     if (!response.ok) throw new Error('Failed to add expense category');
     return await response.json();
   },
@@ -79,8 +83,12 @@ export const api = {
     const { data } = await response.json();
     return data;
   },
-  addIncomeCategory: async (newCategoryName: string): Promise<Category> => {
-    const response = await fetch(`${API_BASE_URL}/income-category`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newCategoryName }), });
+  addIncomeCategory: async (name: string, icon: string): Promise<Category> => {
+    const response = await fetch(`${API_BASE_URL}/income-category`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, icon }),
+    });
     if (!response.ok) throw new Error('Failed to add income category');
     return await response.json();
   },
@@ -99,12 +107,13 @@ export const CURRENCIES = [
     { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
 ];
 
-// --- THIS IS THE FIX: "Tamil" has been added to the list of languages ---
 export const LANGUAGES = [
     { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
-    { code: 'fr', name: 'Français' }, { code: 'de', name: 'Deutsch' },
+    { code: 'fr', name: 'Français' },
+    // --- THIS IS THE FIX: Added the missing 'name' key ---
+    { code: 'de', name: 'Deutsch' },
     { code: 'hi', name: 'हिन्दी' }, { code: 'ja', name: '日本語' },
-    { code: 'ta', name: 'தமிழ்' }, // Added Tamil
+    { code: 'ta', name: 'தமிழ்' },
 ];
 
 export const BANKS: Bank[] = [ /* ... bank data ... */ ];

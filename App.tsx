@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
+// --- THIS IS THE FIX: Import the Google AI library ---
+import { GoogleGenAI } from '@google/genai';
 import Welcome from './components/Welcome';
 import Dashboard from './components/Dashboard';
 import History from './components/History';
@@ -180,9 +182,6 @@ const App: React.FC = () => {
   }, []);
   
 const handleEditTransaction = useCallback((transaction: Expense | Income | Transfer) => {
-    // The transaction object should have a `transactionType` property that reliably
-    // identifies it as 'income' or 'expense'. This is safer than checking for
-    // the existence of a 'source' key, which caused the bug.
     const type = (transaction as any).transactionType === 'income' ? 'income' : 'expense';
     setTransactionToEdit(transaction);
     setModalState({ mode: 'manual', type });
@@ -237,7 +236,43 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
       setTransactionToEdit(null);
   }, [userId, loadAllDataFromDB]);
 
-  const handleAddCategory = async (newCategoryName: string) => { try { await api.addExpenseCategory(newCategoryName); const fetched = await api.fetchExpenseCategories(); setCategories(fetched); } catch (e) { alert((e as Error).message); } };
+  // --- THIS IS THE FIX: A new function to generate an emoji using AI ---
+  const getEmojiForCategory = useCallback(async (categoryName: string): Promise<string> => {
+    try {
+      if (!process.env.REACT_APP_API_KEY) {
+        console.warn("API_KEY missing from .env. Using fallback emoji.");
+        return '🏷️';
+      }
+      const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_API_KEY || '' });
+      const systemInstruction = `You are an emoji generator. Your task is to return a single, relevant emoji that best represents the user's input category name. You must only return the emoji character and nothing else. No extra text, no explanations.`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Category: "${categoryName}"`,
+        config: { systemInstruction: systemInstruction }
+      });
+      
+      const emoji = (response as any).text || '🏷️';
+      // Fallback for unexpected AI responses
+      return emoji.trim().length > 4 ? '🏷️' : emoji.trim();
+    } catch (error) {
+      console.error("Error generating emoji:", error);
+      return '🏷️'; // Return a default emoji on error
+    }
+  }, []);
+
+  // --- THIS IS THE FIX: Updated to generate an emoji before saving ---
+  const handleAddCategory = async (newCategoryName: string) => {
+    try {
+      const emoji = await getEmojiForCategory(newCategoryName);
+      await api.addExpenseCategory(newCategoryName, emoji);
+      const fetched = await api.fetchExpenseCategories();
+      setCategories(fetched);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
+
   const handleDeleteCategory = async (categoryToDelete: string) => {
     setConfirmation({
         isOpen: true, title: "Delete Category", message: `Delete "${categoryToDelete}"?`,
@@ -247,7 +282,19 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
         }
     });
   };
-  const handleAddIncomeCategory = async (newCategory: string) => { try { await api.addIncomeCategory(newCategory); const fetched = await api.fetchIncomeCategories(); setIncomeCategories(fetched); } catch (e) { alert((e as Error).message); } };
+
+  // --- THIS IS THE FIX: Updated to generate an emoji before saving ---
+  const handleAddIncomeCategory = async (newCategoryName: string) => {
+    try {
+      const emoji = await getEmojiForCategory(newCategoryName);
+      await api.addIncomeCategory(newCategoryName, emoji);
+      const fetched = await api.fetchIncomeCategories();
+      setIncomeCategories(fetched);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
+
   const handleDeleteIncomeCategory = async (categoryToDelete: string) => {
     setConfirmation({
         isOpen: true, title: "Delete Category", message: `Delete "${categoryToDelete}"?`,
@@ -257,6 +304,7 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
         }
     });
   };
+
   const handleAddContact = (contact: ContactFormData) => { const newContact: Contact = { ...contact, id: `c_${Date.now()}`, avatarColor: ['bg-blue-500', 'bg-pink-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500'][Math.floor(Math.random() * 5)] }; setContacts(prev => [newContact, ...prev]); };
   const handleUpdateContact = (updatedContact: Contact) => setContacts(prev => prev.map(c => c.id === updatedContact.id ? updatedContact : c));
   const handleDeleteContact = (contactId: string) => {
