@@ -37,6 +37,8 @@ import ConfirmationModal from './components/ConfirmationModal';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
+// DELETE OR COMMENT OUT THIS ENTIRE BLOCK
+/*
 if (!Capacitor.isNativePlatform()) {
   GoogleAuth.initialize({
     clientId: '381448198833-grkepoai0bqbtj2ntofc67hb4tqhd6ln.apps.googleusercontent.com',
@@ -44,6 +46,7 @@ if (!Capacitor.isNativePlatform()) {
     grantOfflineAccess: true,
   });
 }
+*/
 
 const LoadingSpinner: React.FC = () => ( <div className="flex items-center justify-center h-full"> <div className="relative"> <div className="w-16 h-16 border-4 border-violet-200 dark:border-violet-700 rounded-full"></div> <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-t-violet-600 dark:border-t-violet-400 rounded-full animate-spin"></div> </div> </div> );
 
