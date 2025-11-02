@@ -1,5 +1,4 @@
-import React from 'react';
-import type { Expense, Income, BudgetData, Contact, Bank, Category } from './types';
+import type { Bank, BudgetData, Category } from './types';
 
 // --- THIS IS THE CRITICAL FIX ---
 // We now use 'localhost', which is the standard name for your own computer.
@@ -99,10 +98,14 @@ export const CURRENCIES = [
     { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'GBP', name: 'British Pound Sterling', symbol: '£' },
     { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
 ];
+
+// --- THIS IS THE FIX: "Tamil" has been added to the list of languages ---
 export const LANGUAGES = [
     { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
     { code: 'fr', name: 'Français' }, { code: 'de', name: 'Deutsch' },
     { code: 'hi', name: 'हिन्दी' }, { code: 'ja', name: '日本語' },
+    { code: 'ta', name: 'தமிழ்' }, // Added Tamil
 ];
+
 export const BANKS: Bank[] = [ /* ... bank data ... */ ];
 export const BUDGET_DATA: BudgetData = { limit: 1500, spent: 0, remaining: 1500 };
