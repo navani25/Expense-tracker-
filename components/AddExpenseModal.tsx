@@ -107,12 +107,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
 
   const initialFormData = { amount: '', vendor: '', source: '', category: '', date: new Date().toISOString().split('T')[0], notes: '' };
   const [formData, setFormData] = useState<any>(initialFormData);
-
-  useEffect(() => {
-    const correctType = isEditing ? ('source' in transactionToEdit! ? 'income' : 'expense') : transactionType;
-    setActiveTab(correctType);
+useEffect(() => {
+    // The active tab is determined by the `transactionType` prop, which is correctly
+    // set in App.tsx for both new and edited transactions. This avoids re-evaluating
+    // the type and prevents the wrong form from showing.
+    setActiveTab(transactionType);
     setView(mode === 'manual' ? 'tabs' : mode);
-  }, [transactionType, transactionToEdit, isEditing, mode]);
+  }, [transactionType, mode]);
   
   useEffect(() => {
     if (isEditing && transactionToEdit) {
