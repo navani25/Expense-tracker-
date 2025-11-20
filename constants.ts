@@ -1,21 +1,20 @@
 import type { Bank, BudgetData, Category } from './types';
 
-// --- THIS IS THE CRITICAL FIX ---
-// We now use 'localhost', which is the standard name for your own computer.
-const API_BASE_URL = 'http://192.168.1.4:8000/api';
+// Backend API URL - using localhost to match backend server configuration
+const API_BASE_URL = 'http://localhost:8000/api';
 
 export const INITIAL_GUEST_EXPENSE_CATEGORIES: Category[] = [
-    { name: "Accommodation", icon: "🛏️" }, { name: "Entertainment", icon: "🎤" },
-    { name: "Groceries", icon: "🛒" }, { name: "Healthcare", icon: "🦷" },
-    { name: "Insurance", icon: "🧯" }, { name: "Rent & Charges", icon: "🏠" },
-    { name: "Restaurants & Bars", icon: "🍔" }, { name: "Shopping", icon: "🛍️" },
-    { name: "Transport", icon: "🚖" }, { name: "Other", icon: "✋" },
+  { name: "Accommodation", icon: "🛏️" }, { name: "Entertainment", icon: "🎤" },
+  { name: "Groceries", icon: "🛒" }, { name: "Healthcare", icon: "🦷" },
+  { name: "Insurance", icon: "🧯" }, { name: "Rent & Charges", icon: "🏠" },
+  { name: "Restaurants & Bars", icon: "🍔" }, { name: "Shopping", icon: "🛍️" },
+  { name: "Transport", icon: "🚖" }, { name: "Other", icon: "✋" },
 ];
 
 export const INITIAL_GUEST_INCOME_CATEGORIES: Category[] = [
-    { name: "Salary", icon: "💰" }, { name: "Gift", icon: "🎁" },
-    { name: "Freelance", icon: "💼" }, { name: "Investment", icon: "📈" },
-    { name: "Other", icon: "✋" },
+  { name: "Salary", icon: "💰" }, { name: "Gift", icon: "🎁" },
+  { name: "Freelance", icon: "💼" }, { name: "Investment", icon: "📈" },
+  { name: "Other", icon: "✋" },
 ];
 
 export const api = {
@@ -65,9 +64,9 @@ export const api = {
   },
   addExpenseCategory: async (name: string, icon: string): Promise<Category> => {
     const response = await fetch(`${API_BASE_URL}/expense-category`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, icon }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, icon }),
     });
     if (!response.ok) throw new Error('Failed to add expense category');
     return await response.json();
@@ -85,9 +84,9 @@ export const api = {
   },
   addIncomeCategory: async (name: string, icon: string): Promise<Category> => {
     const response = await fetch(`${API_BASE_URL}/income-category`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, icon }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, icon }),
     });
     if (!response.ok) throw new Error('Failed to add income category');
     return await response.json();
@@ -102,19 +101,18 @@ export const api = {
 // --- OTHER CONSTANTS ---
 export const INITIAL_ACCOUNTS: string[] = ["Cash", "Bank", "Wallet", "Credit Card", "UPI"];
 export const CURRENCIES = [
-    { code: 'USD', name: 'United States Dollar', symbol: '$' }, { code: 'EUR', name: 'Euro', symbol: '€' },
-    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'GBP', name: 'British Pound Sterling', symbol: '£' },
-    { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+  { code: 'USD', name: 'United States Dollar', symbol: '$' }, { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'GBP', name: 'British Pound Sterling', symbol: '£' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
 ];
 
 export const LANGUAGES = [
-    { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
-    { code: 'fr', name: 'Français' },
-    // --- THIS IS THE FIX: Added the missing 'name' key ---
-    { code: 'de', name: 'Deutsch' },
-    { code: 'hi', name: 'हिन्दी' }, { code: 'ja', name: '日本語' },
-    { code: 'ta', name: 'தமிழ்' },
+  { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'hi', name: 'हिन्दी' }, { code: 'ja', name: '日本語' },
+  { code: 'ta', name: 'தமிழ்' },
 ];
 
-export const BANKS: Bank[] = [ /* ... bank data ... */ ];
+export const BANKS: Bank[] = [ /* ... bank data ... */];
 export const BUDGET_DATA: BudgetData = { limit: 1500, spent: 0, remaining: 1500 };

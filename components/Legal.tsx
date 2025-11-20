@@ -10,7 +10,7 @@ const LegalItem: React.FC<{ title: string; description: string; onClick: () => v
             <p className="font-semibold text-gray-800 dark:text-gray-200">{title}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
         </div>
-         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
     </button>
 );
 

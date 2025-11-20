@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { Expense, Income, Transfer, AnyTransactionFormData, Contact, Category } from '../types';
 import { useTranslation } from './LanguageProvider';
@@ -22,30 +22,29 @@ interface AddExpenseModalProps {
   userName: string;
 }
 
+// --- Helper Components ---
+
 const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void; }> = ({ label, active, onClick }) => (
-    <button type="button" onClick={onClick} className={`w-full text-center px-3 py-2 text-sm font-semibold rounded-md transition-all duration-200 focus:outline-none ${active ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow' : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-slate-700/50'}`}>
-        {label}
-    </button>
+  <button type="button" onClick={onClick} className={`w-full text-center px-3 py-2 text-sm font-semibold rounded-md transition-all duration-200 focus:outline-none ${active ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow' : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-slate-700/50'}`}>
+    {label}
+  </button>
 );
 
-const AddCustomCategoryModal: React.FC<{ onClose: () => void; onSave: (name: string) => void; }> = ({ onClose, onSave }) => {
-  const [name, setName] = useState('');
+const CategoryPickerButton: React.FC<{ categoryName: string; onClick: () => void; categories: Category[]; }> = ({ categoryName, onClick, categories }) => {
+  const category = categories.find(c => c.name === categoryName);
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60]">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs mx-4 p-5">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Add Custom Category</h3>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Category Name" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" autoFocus />
-        <div className="flex justify-end space-x-2 mt-5">
-          <button onClick={onClose} className="py-2 px-4 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-          <button onClick={() => onSave(name)} disabled={!name.trim()} className="py-2 px-4 rounded-lg text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-400">Save</button>
-        </div>
-      </div>
-    </div>
+    <button type="button" onClick={onClick} className="w-full mt-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 flex items-center justify-between">
+      <span className="flex items-center min-w-0">
+        <span className="mr-2 text-xl">{category?.icon || '🏷️'}</span>
+        <span className="truncate">{category?.name || 'Select Category'}</span>
+      </span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 ml-2 flex-shrink-0"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
   );
 };
 
 const CategorySelectionModal: React.FC<{ onClose: () => void; onSelect: (name: string) => void; onAddCustom: () => void; categories: Category[]; }> = ({ onClose, onSelect, onAddCustom, categories }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-4">
       <header className="flex items-center justify-between p-4 border-b dark:border-gray-700">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Select Category</h2>
@@ -62,10 +61,8 @@ const CategorySelectionModal: React.FC<{ onClose: () => void; onSelect: (name: s
             </button>
           ))}
           <button onClick={onAddCustom} className="flex flex-col items-center justify-center space-y-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600/50">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-600 dark:text-violet-400"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </div>
-            <span className="text-xs text-center font-semibold text-violet-600 dark:text-violet-400">Add Custom</span>
+            <span className="text-2xl">➕</span>
+            <span className="text-xs text-center font-semibold text-violet-600 dark:text-violet-400">Add New</span>
           </button>
         </div>
       </div>
@@ -73,48 +70,111 @@ const CategorySelectionModal: React.FC<{ onClose: () => void; onSelect: (name: s
   </div>
 );
 
-const CategoryPickerButton: React.FC<{ categoryName: string; onClick: () => void; categories: Category[]; }> = ({ categoryName, onClick, categories }) => {
-  const category = categories.find(c => c.name === categoryName);
+const AddCustomCategoryModal: React.FC<{ onClose: () => void; onSave: (name: string) => void; }> = ({ onClose, onSave }) => {
+  const [name, setName] = useState('');
   return (
-    <button type="button" onClick={onClick} className="w-full mt-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 flex items-center justify-between">
-      <span className="flex items-center min-w-0">
-        <span className="mr-2 text-xl">{category?.icon || '🏷️'}</span>
-        <span className="truncate">{category?.name || 'Select Category'}</span>
-      </span>
-      <svg xmlns="http://www.w.org/2000/svg" width="20" height="20" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 ml-2 flex-shrink-0"><polyline points="6 9 12 15 18 9"></polyline></svg>
-    </button>
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70]">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs mx-4 p-5">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">New Category</h3>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" autoFocus />
+        <div className="flex justify-end space-x-2 mt-5">
+          <button onClick={onClose} className="py-2 px-4 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+          <button onClick={() => onSave(name)} disabled={!name.trim()} className="py-2 px-4 rounded-lg text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-400">Save</button>
+        </div>
+      </div>
+    </div>
   );
 };
 
+
+// --- MAIN COMPONENT ---
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave, transactionToEdit, expenseCategories, incomeCategories, onAddExpenseCategory, onAddIncomeCategory, transactionType, accounts, contacts, userName }) => {
   const isEditing = transactionToEdit !== null;
   const { language } = useTranslation();
-  
+
   type ActiveTab = 'expense' | 'income';
   type ModalView = 'tabs' | 'voice' | 'receipt';
-  
+
   const [activeTab, setActiveTab] = useState<ActiveTab>(transactionType);
   const [view, setView] = useState<ModalView>(mode === 'manual' ? 'tabs' : mode);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isAddCustomCategoryModalOpen, setIsAddCustomCategoryModalOpen] = useState(false);
+
+  // Voice & AI State
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState('Listening...');
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [transcript, setTranscript] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null); // Stores AI result before saving
+
+  const recognitionRef = useRef<any>(null);
 
   const currentCategories = activeTab === 'income' ? incomeCategories : expenseCategories;
   const addCategoryHandler = activeTab === 'income' ? onAddIncomeCategory : onAddExpenseCategory;
 
   const initialFormData = { amount: '', vendor: '', source: '', category: '', date: new Date().toISOString().split('T')[0], notes: '' };
   const [formData, setFormData] = useState<any>(initialFormData);
-useEffect(() => {
-    // The active tab is determined by the `transactionType` prop, which is correctly
-    // set in App.tsx for both new and edited transactions. This avoids re-evaluating
-    // the type and prevents the wrong form from showing.
+
+  // --- VOICE RECOGNITION FUNCTIONS ---
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { setStatusText("Voice not supported."); return; }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN'; // Indian English
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setStatusText("Listening...");
+      if (!transcript) setTranscript('');
+      setPreviewData(null);
+    };
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        finalTranscript += event.results[i][0].transcript;
+      }
+      setTranscript(finalTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === 'no-speech') setStatusText("Didn't hear anything. Tap mic.");
+      else if (event.error === 'not-allowed') setStatusText("Permission denied.");
+      else setStatusText("Stopped.");
+      setIsListening(false);
+    };
+
+    recognition.onend = () => { setIsListening(false); };
+    try { recognition.start(); } catch (e) { console.error(e); }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      setStatusText("Tap to speak again");
+    }
+  };
+
+  useEffect(() => {
     setActiveTab(transactionType);
     setView(mode === 'manual' ? 'tabs' : mode);
+    if (mode === 'voice') {
+      setTranscript('');
+      setStatusText('Initializing...');
+      setPreviewData(null);
+
+      const timer = setTimeout(() => {
+        startListening();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
   }, [transactionType, mode]);
-  
+
   useEffect(() => {
     if (isEditing && transactionToEdit) {
       const { id, amount, category, date, notes } = transactionToEdit;
@@ -142,160 +202,253 @@ useEffect(() => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    saveFinal(formData, activeTab);
+  };
+
+  const saveFinal = (data: any, type: 'expense' | 'income') => {
     const dataToSave: AnyTransactionFormData & { transactionType: 'expense' | 'income' } = {
-        transactionType: activeTab,
-        id: isEditing ? transactionToEdit?.id : undefined,
-        ...formData
+      transactionType: type,
+      id: isEditing ? transactionToEdit?.id : undefined,
+      ...data
     };
     onSave(dataToSave);
   };
-  
-  function extractJSONFromText(text: string): string | null { if (!text) return null; const m = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/); return m ? m[0] : null; }
-  
-  // --- TAMIL LANGUAGE SUPPORT ADDED HERE ---
-  const parseTransactionWithAI = useCallback(async (text: string) => {
-    setStatusText(`Processing: "${text}"`);
-    setIsProcessing(true);
-    try {
-      if (!process.env.API_KEY) console.warn("API_KEY missing.");
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  function extractJSONFromText(text: string): string | null { if (!text) return null; const m = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/); return m ? m[0] : null; }
+
+  // --- AI INTELLIGENT PARSING ---
+  const parseTransactionWithAI = async (text: string) => {
+    if (!text.trim()) { setStatusText("Please speak or type something."); return; }
+
+    setStatusText(`Processing...`);
+    setIsProcessing(true);
+
+    try {
+      // YOUR API KEY IS HARDCODED HERE
+      const apiKey = "AIzaSyAojTrjZPXwlBq_xHMXjcoMWraqWZbfltk";
+
+      if (!apiKey) throw new Error("API Key missing");
+
+      const ai = new GoogleGenAI({ apiKey });
       const schema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            transactionType: { type: Type.STRING, enum: ['expense', 'income'] },
-            amount: { type: Type.NUMBER }, category: { type: Type.STRING },
-            date: { type: Type.STRING }, notes: { type: Type.STRING },
-            vendor: { type: Type.STRING }, source: { type: Type.STRING },
-          },
+        type: Type.OBJECT,
+        properties: {
+          transactionType: { type: Type.STRING, enum: ['expense', 'income'], description: "Infer if user is spending (expense) or receiving (income)" },
+          amount: { type: Type.NUMBER },
+          category: { type: Type.STRING },
+          date: { type: Type.STRING },
+          notes: { type: Type.STRING, description: "Short title/description" },
+          vendor: { type: Type.STRING },
+          source: { type: Type.STRING },
         },
       };
-      
-      // description as the 'notes' field, which acts as the title.
-      const systemInstruction = `You are an intelligent expense tracker assistant. Parse the user's English text into a JSON array of transactions following the schema. The 'notes' field should be used for the transaction's title or description. For example, in "monthly salary of 5000", the notes would be "monthly salary". Provide only JSON in the final output.`;
+
+      const systemInstruction = `
+      You are a smart financial assistant. Analyze the user's input.
+      1. Determine if it is 'expense' (spent, paid, bought) or 'income' (received, salary, sold).
+      2. Extract amount, category, and a short title (notes).
+      3. Today is ${new Date().toISOString().split('T')[0]}.
+      4. Return a single JSON object.
+      `;
+
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash', contents: text,
+        model: 'gemini-2.5-flash',
+        contents: text,
         config: { responseMimeType: 'application/json', responseSchema: schema, systemInstruction: systemInstruction }
       });
 
       let rawText = (response as any).text || JSON.stringify(response);
       const jsonStr = extractJSONFromText(rawText);
-      if (!jsonStr) throw new Error("AI did not return parsable JSON.");
+      if (!jsonStr) throw new Error("No JSON found");
 
-      let parsedData = JSON.parse(jsonStr);
-      if (!Array.isArray(parsedData)) parsedData = [parsedData];
+      const parsed = JSON.parse(jsonStr);
 
-      const valid = parsedData.every((item: any) => item.transactionType && item.amount != null);
-      if (!valid || parsedData.length === 0) throw new Error("AI returned invalid data.");
+      // Normalize data
+      const finalData = {
+        ...parsed,
+        amount: Number(parsed.amount),
+        date: parsed.date || new Date().toISOString().split('T')[0],
+        notes: parsed.notes || text,
+        category: parsed.category || 'General'
+      };
 
-      const normalized = parsedData.map((it: any) => ({ ...it, amount: Number(it.amount), date: it.date || new Date().toISOString().split('T')[0] }));
-      onSave(normalized);
-      setStatusText('Parsed successfully.');
+      setPreviewData(finalData);
+      setIsProcessing(false);
+
     } catch (err: any) {
-      console.error("AI parsing error:", err);
-      setStatusText("Sorry, I couldn't understand that.");
-    } finally {
+      console.error("AI Error:", err);
+      setStatusText("Could not understand. Please try again.");
       setIsProcessing(false);
     }
-  }, [onSave]);
-
-  useEffect(() => {
-    if (view === 'voice' && !isEditing) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) { setStatusText("Speech recognition not supported."); return; }
-const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      // This line is changed to hardcode the language to English (en-US).
-      recognition.lang = 'en-US'; 
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onresult = (event: any) => parseTransactionWithAI(event.results[0][0].transcript);
-      recognition.onerror = (event: any) => setStatusText(`Recognition error: ${event?.error || 'unknown'}`);
-      
-      try { recognition.start(); setIsProcessing(true); setStatusText('Listening...'); } catch (err) { setStatusText("Failed to start recognition."); }
-      return () => { try { recognition.stop(); } catch (e) {} };
-    }
-  }, [view, isEditing, parseTransactionWithAI, language]);
-
-  // (Other helper functions remain unchanged)
-  const parseReceiptWithAI = async (base64ImageData: string, mimeType: string) => { /* ... */ };
-  const handleReceiptUpload = (file: File) => { /* ... */ };
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { const { name, value } = e.target; setFormData(prev => ({...prev, [name]: value})); };
-
-  const renderContent = () => {
-    if (view === 'voice') {
-      return (
-        <div className="p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
-          <div className="relative w-24 h-24 mb-6">
-            <div className="absolute inset-0 bg-violet-500 rounded-full animate-ping opacity-50"></div>
-            <div className="relative w-24 h-24 bg-violet-600 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-            </div>
-          </div>
-          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">{statusText}</p>
-          {/* The example text is updated to an English phrase. */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">e.g., "Dinner for 20 dollars" or "Salary of 5000"</p>
-        </div>
-      );
-    }
-    
-    if (view === 'tabs') {
-      const saveButtonText = isEditing ? 'Update' : activeTab === 'income' ? 'Save Income' : 'Save Expense';
-      return (
-        <>
-          <div className="p-4">
-            {!isEditing && (
-              <div className="grid grid-cols-2 gap-1 p-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg mb-4">
-                  <TabButton label="Expense" active={activeTab === 'expense'} onClick={() => setActiveTab('expense')} />
-                  <TabButton label="Income" active={activeTab === 'income'} onClick={() => setActiveTab('income')} />
-              </div>
-            )}
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              {activeTab === 'expense' ? (
-                <>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Title</label><input type="text" name="notes" value={formData.notes} onChange={handleInputChange} placeholder="e.g., Dinner with client" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Vendor</label><input type="text" name="vendor" value={formData.vendor} onChange={handleInputChange} placeholder="e.g., Starbucks" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</label><input type="number" name="amount" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" required/></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Category</label><CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={currentCategories} /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Date</label><input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" required/></div>
-                </>
-              ) : (
-                <>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Title</label><input type="text" name="notes" value={formData.notes} onChange={handleInputChange} placeholder="e.g., Monthly Salary" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Source</label><input type="text" name="source" value={formData.source} onChange={handleInputChange} placeholder="e.g., Client Project" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount</label><input type="number" name="amount" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" required/></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Category</label><CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={currentCategories} /></div>
-                  <div><label className="text-sm font-medium text-gray-600 dark:text-gray-300">Date</label><input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg" required/></div>
-                </>
-              )}
-              <div className="pt-2"><button type="submit" className="w-full bg-violet-600 text-white py-3 rounded-lg hover:bg-violet-700 font-semibold">{saveButtonText}</button></div>
-            </form>
-          </div>
-          {isCategoryModalOpen && ( <CategorySelectionModal onClose={() => setIsCategoryModalOpen(false)} onSelect={handleCategorySelect} onAddCustom={() => setIsAddCustomCategoryModalOpen(true)} categories={currentCategories} /> )}
-          {isAddCustomCategoryModalOpen && ( <AddCustomCategoryModal onClose={() => setIsAddCustomCategoryModalOpen(false)} onSave={handleAddCustomCategory} /> )}
-        </>
-      );
-    }
-    return null;
   };
 
-  const getTitle = () => { if (isEditing) return 'Edit Transaction'; if (view === 'voice') return 'Voice Entry'; if (view === 'receipt') return 'Upload Receipt'; return activeTab === 'income' ? 'Add Income' : 'Add Expense'; };
+  const handleProcessVoice = () => {
+    stopListening();
+    parseTransactionWithAI(transcript);
+  };
+
+  const handleConfirmPreview = () => {
+    if (!previewData) return;
+    const type = previewData.transactionType === 'income' ? 'income' : 'expense';
+    saveFinal(previewData, type);
+  };
+
+  useEffect(() => { return () => { if (recognitionRef.current) recognitionRef.current.stop(); }; }, []);
+
+  // --- RENDER VIEWS ---
+
+  const renderVoiceView = () => {
+    // If AI has processed data, show PREVIEW CARD
+    if (previewData) {
+      const isInc = previewData.transactionType === 'income';
+      return (
+        <div className="p-6 flex flex-col items-center animate-fade-in">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isInc ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {isInc ?
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></svg> :
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
+            }
+          </div>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">{isInc ? 'Income Detected' : 'Expense Detected'}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Is this correct?</p>
+
+          <div className="w-full bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6 border border-gray-200 dark:border-gray-600">
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">Amount</span>
+              <span className={`font-bold text-lg ${isInc ? 'text-green-600' : 'text-red-600'}`}>₹{previewData.amount}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">For</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">{previewData.notes || previewData.vendor || 'Unknown'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">Category</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">{previewData.category}</span>
+            </div>
+          </div>
+
+          <div className="flex w-full gap-3">
+            <button onClick={() => { setPreviewData(null); setStatusText("Tap mic to try again"); }} className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-colors hover:bg-gray-300 dark:hover:bg-gray-600">
+              Retry
+            </button>
+            <button onClick={handleConfirmPreview} className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none transition-all">
+              Confirm & Save
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Default VOICE LISTENING UI
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[320px]">
+
+        {/* Professional Pulsing Mic */}
+        <div className="relative w-24 h-24 mb-6 cursor-pointer group" onClick={isListening ? stopListening : startListening}>
+          {isListening && (
+            <>
+              <div className="absolute inset-0 bg-violet-500 rounded-full animate-ping opacity-20"></div>
+              <div className="absolute inset-0 bg-violet-400 rounded-full animate-pulse opacity-30 delay-75"></div>
+            </>
+          )}
+          <div className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl ${isListening ? 'bg-gradient-to-br from-violet-500 to-fuchsia-600 scale-110' : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 group-hover:scale-105'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={isListening ? "white" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isListening ? "text-white" : "text-gray-500 dark:text-gray-400"}>
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </div>
+        </div>
+
+        <p className={`text-lg font-medium mb-3 transition-all ${isListening ? 'text-violet-600 dark:text-violet-400 animate-pulse' : 'text-gray-600 dark:text-gray-300'}`}>
+          {statusText}
+        </p>
+
+        {/* Editable Transcript Box */}
+        <div className="w-full max-w-xs mb-6 relative group">
+          <textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            onFocus={() => isListening && stopListening()} // Stop listening if user taps to edit
+            placeholder="Try saying: 'Petrol 500'"
+            className="w-full bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl min-h-[80px] text-center text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none transition-all shadow-inner"
+          />
+          <span className="absolute bottom-2 right-3 text-xs text-gray-400 pointer-events-none">Tap to edit</span>
+        </div>
+
+        {/* Controls */}
+        <div className="flex w-full gap-3 max-w-xs">
+          <button onClick={() => setView('tabs')} className="flex-1 py-3 rounded-xl font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            Manual Input
+          </button>
+          {transcript && !isProcessing && (
+            <button onClick={handleProcessVoice} className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none transition-all">
+              Analyze
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderManualView = () => {
+    const saveButtonText = isEditing ? 'Update Transaction' : activeTab === 'income' ? 'Add Income' : 'Add Expense';
+    return (
+      <div className="p-5">
+        {!isEditing && (
+          <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 dark:bg-gray-700/50 rounded-xl mb-6">
+            <TabButton label="Expense" active={activeTab === 'expense'} onClick={() => setActiveTab('expense')} />
+            <TabButton label="Income" active={activeTab === 'income'} onClick={() => setActiveTab('income')} />
+          </div>
+        )}
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Amount</label><div className="relative mt-1"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span><input type="number" name="amount" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" className="w-full pl-8 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xl font-bold text-gray-900 dark:text-gray-100 rounded-xl border-none focus:ring-2 focus:ring-violet-500 transition-all" required autoFocus /></div></div>
+
+          {activeTab === 'expense' ? (
+            <>
+              <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Title</label><input type="text" name="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="e.g. Lunch, Taxi" className="w-full mt-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border-none focus:ring-2 focus:ring-violet-500" /></div>
+              <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Category</label><CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={currentCategories} /></div>
+            </>
+          ) : (
+            <>
+              <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Source / Title</label><input type="text" name="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="e.g. Freelance, Salary" className="w-full mt-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border-none focus:ring-2 focus:ring-violet-500" /></div>
+              <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Category</label><CategoryPickerButton categoryName={formData.category} onClick={() => setIsCategoryModalOpen(true)} categories={currentCategories} /></div>
+            </>
+          )}
+
+          <div><label className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider ml-1">Date</label><input type="date" name="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full mt-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border-none focus:ring-2 focus:ring-violet-500" required /></div>
+
+          <div className="pt-4"><button type="submit" className="w-full bg-violet-600 text-white py-3.5 rounded-xl hover:bg-violet-700 font-bold shadow-lg shadow-violet-200 dark:shadow-none transition-all active:scale-95">{saveButtonText}</button></div>
+        </form>
+      </div>
+    );
+  };
+
+  const getTitle = () => {
+    if (previewData) return 'Confirm Transaction';
+    if (isEditing) return 'Edit Transaction';
+    if (view === 'voice') return 'Voice Assistant';
+    return activeTab === 'income' ? 'New Income' : 'New Expense';
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-auto">
-            <header className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{getTitle()}</h2>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </header>
-            {renderContent()}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm mx-auto overflow-hidden flex flex-col max-h-[90vh]">
+        <header className="flex items-center justify-between p-4 px-6 border-b border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md sticky top-0 z-10">
+          <h2 className="text-xl font-extrabold text-gray-800 dark:text-gray-100 tracking-tight">{getTitle()}</h2>
+          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </header>
+
+        <div className="overflow-y-auto custom-scrollbar">
+          {view === 'voice' ? renderVoiceView() : renderManualView()}
         </div>
+
+        {isCategoryModalOpen && (<CategorySelectionModal onClose={() => setIsCategoryModalOpen(false)} onSelect={handleCategorySelect} onAddCustom={() => setIsAddCustomCategoryModalOpen(true)} categories={currentCategories} />)}
+        {isAddCustomCategoryModalOpen && (<AddCustomCategoryModal onClose={() => setIsAddCustomCategoryModalOpen(false)} onSave={handleAddCustomCategory} />)}
+      </div>
     </div>
   );
 };

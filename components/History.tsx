@@ -16,13 +16,13 @@ const EmptyState: React.FC<{
 
     switch (type) {
         case 'income':
-            icon = ( <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 dark:text-violet-400"><path d="M19 7V6a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2v-1"/><path d="M12 12h8m-4-4v8"/><rect x="2" y="10" width="9" height="4" rx="1"/></svg> );
+            icon = ( <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 dark:text-violet-400"><path d="M19 7V6a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2v-1"/><path d="M12 12h8m-4-4v8"/><rect x="2" y="10" width="9" height="4" rx="1"/></svg> );
             title = "Ready to Track Your Earnings?";
             message = "Log your income to see a complete financial picture. Let's add your first entry.";
             buttonText = 'Add New Income';
             break;
         default: // 'expense'
-            icon = ( <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 dark:text-violet-400"><path d="M19 7V6a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2v-1"/><path d="M12 12h8"/><rect x="2" y="10" width="9" height="4" rx="1"/></svg> );
+            icon = ( <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-500 dark:text-violet-400"><path d="M19 7V6a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2v-1"/><path d="M12 12h8"/><rect x="2" y="10" width="9" height="4" rx="1"/></svg> );
             title = "Your Expense History is Clear!";
             message = "Start by adding your first transaction. Tap the button below to log a new expense.";
             buttonText = 'Add New Expense';
@@ -226,7 +226,7 @@ const History: React.FC<HistoryProps> = ({ expenses, income, onEditTransaction, 
             className="absolute bottom-24 sm:bottom-8 right-4 sm:right-8 bg-violet-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-violet-700 transition-transform transform hover:scale-110 z-40"
             aria-label={`Add New ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
       )}
 

@@ -209,7 +209,7 @@ const Support: React.FC<{
             disabled={isLoading}
           />
           <button type="submit" disabled={isLoading || !userInput.trim()} className="bg-violet-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-violet-700 transition-colors disabled:bg-violet-400 disabled:cursor-not-allowed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
         </form>
       </div>
