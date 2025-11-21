@@ -3,12 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
+ "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "server": "node backend/server.js",
-    "start": "concurrently \"npm run dev\" \"npm run server\""
+    "start": "concurrently \"npm run dev\" \"npm run server\"",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@capacitor/android": "^5.7.8",
