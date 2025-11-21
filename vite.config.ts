@@ -5,8 +5,10 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
-      // --- IMPORTANT FIX FOR GITHUB PAGES ---
-      base: "/Expense-tracker-/", // உங்கள் GitHub Repo பெயரை இங்கே சரியாக கொடுக்கவும்
+      // --- முக்கிய மாற்றம் ---
+      // உங்கள் Repo பெயர் 'Expense-tracker-' (கடைசியில் hyphen உள்ளது)
+      // எனவே base பெயரிலும் அது இருக்க வேண்டும்.
+      base: "/Expense-tracker-/", 
 
       server: {
         port: 3000,
