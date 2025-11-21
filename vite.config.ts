@@ -5,12 +5,12 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
-      // --- THIS IS THE CRITICAL FIX ---
-      // This server configuration is necessary for Google OAuth to work correctly
-      // in a local development environment.
+      // --- IMPORTANT FIX FOR GITHUB PAGES ---
+      base: "/Expense-tracker-/", // உங்கள் GitHub Repo பெயரை இங்கே சரியாக கொடுக்கவும்
+
       server: {
         port: 3000,
-        host: 'localhost', // Explicitly set host to localhost
+        host: 'localhost',
       },
       plugins: [react()],
       define: {

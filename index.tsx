@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LanguageProvider } from './components/LanguageProvider';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { HashRouter } from 'react-router-dom'; // இதை புதிதாக சேர்த்துள்ளேன்
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,21 +12,22 @@ if (!rootElement) {
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
-// --- VERIFICATION STEP ---
-// This will print your Client ID to the browser's developer console.
 console.log("Attempting to initialize Google OAuth with Client ID:", GOOGLE_CLIENT_ID);
 
 if (!GOOGLE_CLIENT_ID) {
-    alert("CRITICAL ERROR: Missing Google Client ID. Please make sure the VITE_GOOGLE_CLIENT_ID is set in your .env file.");
-    throw new Error("Missing Google Client ID. Please set VITE_GOOGLE_CLIENT_ID in your .env file.");
+    // GitHub Pages-ல் .env வேலை செய்யாது என்பதால், Alert வராமல் தடுக்கலாம்.
+    console.warn("Warning: Google Client ID is missing.");
 }
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ""}>
         <LanguageProvider>
-            <App />
+            {/* HashRouter முக்கியம் - இதுதான் GitHub Pages-ல் ரவுட்டிங் பிழையை தடுக்கும் */}
+            <HashRouter>
+                <App />
+            </HashRouter>
         </LanguageProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
