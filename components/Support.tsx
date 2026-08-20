@@ -3,7 +3,7 @@ import { Page, Income, Expense } from '../types';
 import Header from './common/Header';
 import BackButton from './common/BackButton';
 import { useTranslation } from './LanguageProvider';
-import { GoogleGenAI, Chat } from '@google/genai';
+import { api } from '../constants';
 
 interface Message {
   role: 'user' | 'model';
@@ -54,45 +54,11 @@ const Support: React.FC<{
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [chat, setChat] = useState<Chat | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const initChat = async () => {
-      try {
-        if (!process.env.API_KEY) {
-          throw new Error("API key not configured.");
-        }
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
-        const systemInstruction = `You are a friendly and intelligent financial assistant for an app called "Ledgerly". Your primary goal is to help users understand their financial data and how to use the app.
-
-        **Your Capabilities:**
-        1.  **Answer App Questions:** Explain features like the **Dashboard**, **History**, **Reports**, etc. Use markdown for emphasis, specifically using ** for bolding key terms. For lists, start each item on a new line with '* '.
-        2.  **Analyze User Data:** You will receive the user's financial data for the **current month** in a JSON format. Use this data to answer questions like "What is my total income?", "How much did I spend on groceries?", or "What were my biggest expenses this month?".
-        3.  **Perform Calculations:** Calculate totals and averages based on the user's request and the provided data. Today's date is ${new Date().toISOString().split('T')[0]}.
-        4.  **Be Clear and Concise:** Present financial data clearly. When giving a total, bold the final number.
-        
-        **Important:** Assume all questions relate to the current month's data unless the user specifies a different time period.`;
-
-        const chatSession = ai.chats.create({
-          model: 'gemini-2.5-flash',
-          config: {
-            systemInstruction: systemInstruction,
-          },
-        });
-        setChat(chatSession);
-
-        setMessages([{ role: 'model', text: t('support_greeting') }]);
-      } catch (error) {
-        console.error("Failed to initialize AI chat:", error);
-        setMessages([{ role: 'model', text: "Sorry, the support chat is currently unavailable. Please try again later." }]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initChat();
+    setMessages([{ role: 'model', text: t('support_greeting') }]);
   }, [t]);
 
   const scrollToBottom = () => {
@@ -103,15 +69,15 @@ const Support: React.FC<{
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userInput.trim() || isLoading || !chat) return;
+    if (!userInput.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', text: userInput };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = userInput;
     setUserInput('');
     setIsLoading(true);
 
     try {
-      // --- THIS IS THE FIX: Filter data to the current month before sending ---
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
@@ -126,16 +92,13 @@ const Support: React.FC<{
       });
 
       const context = `
-        CONTEXT:
         Current Month: ${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         Income Data for Current Month: ${JSON.stringify(monthlyIncome)}
         Expense Data for Current Month: ${JSON.stringify(monthlyExpenses)}
-        USER QUESTION:
-        ${userInput}
       `;
         
-      const response = await chat.sendMessage({ message: context });
-      const modelMessage: Message = { role: 'model', text: response.text };
+      const reply = await api.ai.chat(currentInput, context);
+      const modelMessage: Message = { role: 'model', text: reply };
       setMessages(prev => [...prev, modelMessage]);
     } catch (error) {
       console.error("AI response error:", error);

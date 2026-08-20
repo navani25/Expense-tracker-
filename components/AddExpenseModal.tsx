@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { Expense, Income, Transfer, AnyTransactionFormData, Contact, Category } from '../types';
 import { useTranslation } from './LanguageProvider';
+import { api } from '../constants';
 
 declare global {
   interface Window { SpeechRecognition: any; webkitSpeechRecognition: any; }
@@ -214,9 +214,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
     onSave(dataToSave);
   };
 
-  function extractJSONFromText(text: string): string | null { if (!text) return null; const m = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/); return m ? m[0] : null; }
-
-  // --- AI INTELLIGENT PARSING ---
+  // --- AI INTELLIGENT PARSING VIA SECURE BACKEND ---
   const parseTransactionWithAI = async (text: string) => {
     if (!text.trim()) { setStatusText("Please speak or type something."); return; }
 
@@ -224,60 +222,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ mode, onClose, onSave
     setIsProcessing(true);
 
     try {
-      // YOUR API KEY IS HARDCODED HERE
-      const apiKey = "AIzaSyAojTrjZPXwlBq_xHMXjcoMWraqWZbfltk";
-
-      if (!apiKey) throw new Error("API Key missing");
-
-      const ai = new GoogleGenAI({ apiKey });
-      const schema = {
-        type: Type.OBJECT,
-        properties: {
-          transactionType: { type: Type.STRING, enum: ['expense', 'income'], description: "Infer if user is spending (expense) or receiving (income)" },
-          amount: { type: Type.NUMBER },
-          category: { type: Type.STRING },
-          date: { type: Type.STRING },
-          notes: { type: Type.STRING, description: "Short title/description" },
-          vendor: { type: Type.STRING },
-          source: { type: Type.STRING },
-        },
-      };
-
-      const systemInstruction = `
-      You are a smart financial assistant. Analyze the user's input.
-      1. Determine if it is 'expense' (spent, paid, bought) or 'income' (received, salary, sold).
-      2. Extract amount, category, and a short title (notes).
-      3. Today is ${new Date().toISOString().split('T')[0]}.
-      4. Return a single JSON object.
-      `;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: text,
-        config: { responseMimeType: 'application/json', responseSchema: schema, systemInstruction: systemInstruction }
-      });
-
-      let rawText = (response as any).text || JSON.stringify(response);
-      const jsonStr = extractJSONFromText(rawText);
-      if (!jsonStr) throw new Error("No JSON found");
-
-      const parsed = JSON.parse(jsonStr);
-
-      // Normalize data
-      const finalData = {
-        ...parsed,
-        amount: Number(parsed.amount),
-        date: parsed.date || new Date().toISOString().split('T')[0],
-        notes: parsed.notes || text,
-        category: parsed.category || 'General'
-      };
-
+      const finalData = await api.ai.parseTransaction(text);
       setPreviewData(finalData);
       setIsProcessing(false);
-
     } catch (err: any) {
       console.error("AI Error:", err);
-      setStatusText("Could not understand. Please try again.");
+      setStatusText(err.message || "Could not understand. Please try again.");
       setIsProcessing(false);
     }
   };

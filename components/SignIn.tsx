@@ -7,7 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 interface SignInProps {
     setActivePage: (page: Page) => void;
     setLoginProvider: (provider: LoginProvider) => void;
-    onGoogleLogin: (name?: string, email?: string, id?: string) => void;
+    onGoogleLogin: (name?: string, email?: string, id?: string, credential?: string) => void;
     isDarkMode: boolean;
 }
 
@@ -26,10 +26,10 @@ const SignIn: React.FC<SignInProps> = ({ setActivePage, onGoogleLogin, isDarkMod
                     fullName = `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim();
                 }
                 
-                onGoogleLogin(fullName, decoded.email, decoded.sub);
+                onGoogleLogin(fullName, decoded.email, decoded.sub, credentialResponse.credential);
             } catch (error) {
                 console.error("Error decoding JWT:", error);
-                alert("Login successful, but could not retrieve your profile information. Please try again.");
+                onGoogleLogin(undefined, undefined, undefined, credentialResponse.credential);
             }
         } else {
             console.error("Google Sign-In Error: No credential returned.");

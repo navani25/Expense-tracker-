@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai'; // Import the Google AI library
 import Welcome from './components/Welcome';
 import Dashboard from './components/Dashboard';
 import History from './components/History';
@@ -16,7 +15,7 @@ import Contacts from './components/Contacts';
 import Legal from './components/Legal';
 import Login from './components/Login';
 import Signup from './components/Signup';
-import { CURRENCIES, BANKS, INITIAL_ACCOUNTS, api, INITIAL_GUEST_EXPENSE_CATEGORIES, INITIAL_GUEST_INCOME_CATEGORIES } from './constants';
+import { CURRENCIES, BANKS, INITIAL_ACCOUNTS, api, INITIAL_GUEST_EXPENSE_CATEGORIES, INITIAL_GUEST_INCOME_CATEGORIES, getAuthToken, clearAuthToken } from './constants';
 import { useDarkMode } from './hooks/useDarkMode';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -96,11 +95,11 @@ const App: React.FC = () => {
 
 
   const loadAllDataFromDB = useCallback(async () => {
-    if (!userId) return;
     setIsLoading(true);
     try {
+      await api.initLocalDb();
       const [fetchedTransactions, fetchedExpCategories, fetchedIncCategories] = await Promise.all([
-        api.fetchTransactions(userId),
+        api.fetchTransactions(),
         api.fetchExpenseCategories(),
         api.fetchIncomeCategories(),
       ]);
@@ -109,27 +108,64 @@ const App: React.FC = () => {
       setIncome(fetchedTransactions.filter((t: any) => t.transactionType === 'income'));
       setTransfers(fetchedTransactions.filter((t: any) => t.transactionType === 'transfer'));
       
-      setCategories(fetchedExpCategories);
-      setIncomeCategories(fetchedIncCategories);
+      setCategories(fetchedExpCategories.length > 0 ? fetchedExpCategories : INITIAL_GUEST_EXPENSE_CATEGORIES);
+      setIncomeCategories(fetchedIncCategories.length > 0 ? fetchedIncCategories : INITIAL_GUEST_INCOME_CATEGORIES);
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error("Failed to fetch local data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, []);
+
+  // Initialize and load local data on app boot
+  useEffect(() => {
+    loadAllDataFromDB();
+  }, [loadAllDataFromDB]);
+
+  // Android Native Back Button and Status Bar handling
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/app').then(({ App: CapApp }) => {
+        CapApp.addListener('backButton', ({ canGoBack }) => {
+          if (activePage !== Page.DASHBOARD) {
+            setActivePage(Page.DASHBOARD);
+          } else {
+            CapApp.exitApp();
+          }
+        });
+      }).catch(err => console.warn('Could not register backButton listener', err));
+
+      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+        StatusBar.setStyle({ style: isDarkMode ? Style.Dark : Style.Light }).catch(() => {});
+      }).catch(() => {});
+    }
+  }, [activePage, isDarkMode]);
 
   useEffect(() => {
-    if (isUserSignedIn && userId) {
-      loadAllDataFromDB();
+    const restoreSession = async () => {
+      const token = getAuthToken();
+      if (!token) return;
+      try {
+        const { user } = await api.auth.getMe();
+        if (user && user.userId) {
+          setUserId(user.userId);
+          setUserName(user.name || "User");
+          setUserEmail(user.email || "user@example.com");
+          setIsUserSignedIn(true);
+        }
+      } catch (err) {
+        clearAuthToken();
+      }
+    };
+    restoreSession();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
       const savedPhoto = localStorage.getItem(`profilePhoto_${userId}`);
       if (savedPhoto) setProfilePhoto(savedPhoto);
-    } else {
-      setExpenses([]); setIncome([]); setTransfers([]); setProfilePhoto(null);
-      setCategories(INITIAL_GUEST_EXPENSE_CATEGORIES);
-      setIncomeCategories(INITIAL_GUEST_INCOME_CATEGORIES);
-      setIsLoading(false);
     }
-  }, [isUserSignedIn, userId, loadAllDataFromDB]);
+  }, [userId]);
 
   useEffect(() => {
     if (userId && profilePhoto) localStorage.setItem(`profilePhoto_${userId}`, profilePhoto);
@@ -143,17 +179,38 @@ const App: React.FC = () => {
   }, [userName, userEmail, userId]);
 
 
-  const handleLogin = useCallback((name?: string, email?: string, id?: string) => {
-    const finalId = id || null;
+  const handleLogin = useCallback(async (name?: string, email?: string, id?: string, credential?: string) => {
+    let finalId = id || null;
+    let finalName = name || "User";
+    let finalEmail = email || "user@example.com";
+
+    try {
+      let authResponse;
+      if (credential) {
+        authResponse = await api.auth.googleLogin({ credential, name, email, id });
+      } else {
+        authResponse = await api.auth.login({ name, email, id, provider: 'email' });
+      }
+
+      if (authResponse && authResponse.user) {
+        finalId = authResponse.user.userId;
+        finalName = authResponse.user.name || finalName;
+        finalEmail = authResponse.user.email || finalEmail;
+      }
+    } catch (e) {
+      console.warn("Backend auth call failed, using local session state:", e);
+      finalId = finalId || (email ? `user_${email.replace(/[^a-zA-Z0-9]/g, '_')}` : 'default_user');
+    }
+
     if (!finalId) return;
 
     const savedProfile = localStorage.getItem(`profileInfo_${finalId}`);
-    let finalName = name || "User";
-    let finalEmail = email || "user@example.com";
     if (savedProfile) {
-        const { savedName, savedEmail } = JSON.parse(savedProfile);
-        finalName = savedName || finalName;
-        finalEmail = savedEmail || finalEmail;
+        try {
+          const { savedName, savedEmail } = JSON.parse(savedProfile);
+          finalName = savedName || finalName;
+          finalEmail = savedEmail || finalEmail;
+        } catch (e) {}
     }
     
     setIsUserSignedIn(true);
@@ -178,6 +235,7 @@ const App: React.FC = () => {
   }, [isUserSignedIn]);
 
   const handleLogout = useCallback(() => {
+    clearAuthToken();
     setIsUserSignedIn(false); setContacts([]); setIsBankConnected(false);
     setUserName(""); setUserEmail(""); setUserId(null);
     setActivePage(Page.DASHBOARD);
@@ -190,25 +248,24 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
   }, []);
   
   const handleDeleteTransaction = useCallback(async (id: string | number) => {
-    if (!userId) return;
-    
     setConfirmation({
         isOpen: true,
         title: "Delete Transaction",
         message: "Are you sure you want to permanently delete this transaction?",
         onConfirm: async () => {
-            try { await api.deleteTransaction(id, userId); await loadAllDataFromDB(); } catch (error) { console.error("Could not delete transaction:", error); alert("Could not delete the transaction."); }
+            try { 
+              await api.deleteTransaction(id); 
+              await loadAllDataFromDB(); 
+            } catch (error) { 
+              console.error("Could not delete local transaction:", error); 
+              alert("Could not delete the transaction."); 
+            }
             setConfirmation(null);
         }
     });
-  }, [userId, loadAllDataFromDB]);
+  }, [loadAllDataFromDB]);
   
   const handleSaveTransaction = useCallback(async (data: AnyTransactionFormData | AnyTransactionFormData[]) => {
-      if (!userId) {
-          alert("You must be signed in to save a transaction.");
-          return;
-      }
-
       const saveData = async (item: AnyTransactionFormData & { transactionType?: 'expense' | 'income' }) => {
           const amount = typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount;
           if (isNaN(amount) || amount <= 0) return;
@@ -217,12 +274,12 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
           
           try {
               if (item.id) {
-                  await api.updateTransaction(item.id, transactionData, userId);
+                  await api.updateTransaction(item.id, transactionData);
               } else {
-                  await api.addTransaction(transactionData, userId);
+                  await api.addTransaction(transactionData);
               }
           } catch (error) {
-              console.error("Failed to save transaction:", error);
+              console.error("Failed to save transaction locally:", error);
               alert("Could not save the transaction.");
           }
       };
@@ -236,31 +293,15 @@ const handleEditTransaction = useCallback((transaction: Expense | Income | Trans
       await loadAllDataFromDB();
       setModalState({ mode: null, type: 'expense' });
       setTransactionToEdit(null);
-  }, [userId, loadAllDataFromDB]);
+  }, [loadAllDataFromDB]);
 
-  // This function uses the Google AI to generate a relevant emoji for a category name.
+  // Securely request category emoji from the backend
   const getEmojiForCategory = useCallback(async (categoryName: string): Promise<string> => {
     try {
-      // IMPORTANT: This checks for the API key in your .env file.
-      if (!process.env.REACT_APP_API_KEY) {
-        console.warn("API_KEY missing from .env file. Using fallback emoji.");
-        return '🏷️';
-      }
-      const ai = new GoogleGenAI({ apiKey: process.env.REACT_APP_API_KEY || '' });
-      const systemInstruction = `You are an emoji generator. Your task is to return a single, relevant emoji that best represents the user's input category name. You must only return the emoji character and nothing else. No extra text, no explanations.`;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Category: "${categoryName}"`,
-        config: { systemInstruction: systemInstruction }
-      });
-      
-      const emoji = (response as any).text || '🏷️';
-      // A safety check to make sure the AI returns a valid-looking emoji
-      return emoji.trim().length > 4 ? '🏷️' : emoji.trim();
+      return await api.ai.getCategoryEmoji(categoryName);
     } catch (error) {
       console.error("Error generating emoji:", error);
-      return '🏷️'; // Return a default emoji if there is any error
+      return '🏷️';
     }
   }, []);
 

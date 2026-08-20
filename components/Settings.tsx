@@ -16,7 +16,7 @@ interface SettingsProps {
     isDarkMode: boolean;
     setIsDarkMode: (isDark: boolean) => void;
     profilePhoto: string | null;
-    onGoogleLogin: (name?: string, email?: string, id?: string) => void;
+    onGoogleLogin: (name?: string, email?: string, id?: string, credential?: string) => void;
 }
 
 const SettingsListItem: React.FC<{

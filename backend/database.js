@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
-const DBSOURCE = "ledgerly.db";
+const path = require('path');
+const DBSOURCE = process.env.DATABASE_PATH || path.resolve(__dirname, 'ledgerly.db');
 
 const INITIAL_EXPENSE_CATEGORIES = [
     { name: "Accommodation", icon: "🛏️" }, { name: "Entertainment", icon: "🎤" },
